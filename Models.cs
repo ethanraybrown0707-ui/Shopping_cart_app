@@ -1,3 +1,5 @@
+using System.ComponentModel;
+
 namespace ShoppingCartApp;
 
 /// <summary>A catalog product. No INotifyPropertyChanged needed since fields never change
@@ -10,18 +12,38 @@ public class Product
 }
 
 /// <summary>
-/// One line in the cart. Deliberately a distinct object per "Add to Cart" click - even for the
-/// same Product added twice - rather than putting Product objects straight into the cart
-/// collection. WPF's ItemsControlAutomationPeer keys its automation-peer cache by item
-/// reference, so two ListBoxItems bound to the very same object collapse into a single
-/// UI-Automation element (the visual tree still renders both rows correctly, but FlaUI/UIA
-/// callers can only see and count one of them). Wrapping each addition in its own CartLine
-/// gives every row distinct identity, which is what makes duplicate cart entries reliably
-/// testable via UI Automation.
+/// One line in the cart - one CartLine per distinct Product, with a Quantity that goes up when
+/// the same product is added again (rather than adding a second row for it). Quantity needs
+/// INotifyPropertyChanged since, unlike Product, it changes after the line already exists and
+/// is on screen - the bound TextBlocks need to hear about that to refresh.
 /// </summary>
-public class CartLine
+public class CartLine : INotifyPropertyChanged
 {
+    private int _quantity = 1;
+
     public required Product Product { get; init; }
+
+    public int Quantity
+    {
+        get => _quantity;
+        set
+        {
+            if (_quantity == value) return;
+            _quantity = value;
+            OnPropertyChanged(nameof(Quantity));
+            OnPropertyChanged(nameof(DisplayQuantity));
+            OnPropertyChanged(nameof(LineTotal));
+            OnPropertyChanged(nameof(DisplayLineTotal));
+        }
+    }
+
     public string Name => Product.Name;
-    public string DisplayPrice => Product.DisplayPrice;
+    public string DisplayQuantity => $"x{Quantity}";
+    public decimal LineTotal => Product.Price * Quantity;
+    public string DisplayLineTotal => LineTotal.ToString("C");
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    private void OnPropertyChanged(string propertyName) =>
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 }

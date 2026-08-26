@@ -33,12 +33,17 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock Grid.Column="0" Text="{Binding Name}" VerticalAlignment="Center"
                            TextTrimming="CharacterEllipsis"/>
-                <TextBlock Grid.Column="1" Text="{Binding DisplayPrice}" Margin="6,0" VerticalAlignment="Center"/>
-                <!-- Same AutomationId-per-template / bound-Name-per-row pattern as Add to Cart. -->
-                <Button Grid.Column="2" Content="Remove" Tag="{Binding}" Padding="4,1" FontSize="11"
+                <TextBlock Grid.Column="1" Text="{Binding DisplayQuantity}" Margin="4,0" VerticalAlignment="Center"
+                           AutomationProperties.AutomationId="CartLineQuantityText"/>
+                <TextBlock Grid.Column="2" Text="{Binding DisplayLineTotal}" Margin="4,0" VerticalAlignment="Center"
+                           AutomationProperties.AutomationId="CartLineTotalText"/>
+                <!-- Same AutomationId-per-template / bound-Name-per-row pattern as Add to Cart.
+                     One click removes one unit; the row itself disappears once Quantity hits 0. -->
+                <Button Grid.Column="3" Content="Remove" Tag="{Binding}" Padding="4,1" FontSize="11"
                         AutomationProperties.AutomationId="RemoveFromCartButton"
                         AutomationProperties.Name="{Binding Name, StringFormat='Remove {0} from Cart'}"
                         Click="RemoveFromCart_Click"/>
