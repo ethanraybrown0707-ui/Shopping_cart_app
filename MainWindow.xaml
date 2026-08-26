@@ -32,9 +32,16 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="{Binding Name}"/>
-                <TextBlock Grid.Column="1" Text="{Binding DisplayPrice}" Margin="8,0,0,0"/>
+                <TextBlock Grid.Column="0" Text="{Binding Name}" VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis"/>
+                <TextBlock Grid.Column="1" Text="{Binding DisplayPrice}" Margin="6,0" VerticalAlignment="Center"/>
+                <!-- Same AutomationId-per-template / bound-Name-per-row pattern as Add to Cart. -->
+                <Button Grid.Column="2" Content="Remove" Tag="{Binding}" Padding="4,1" FontSize="11"
+                        AutomationProperties.AutomationId="RemoveFromCartButton"
+                        AutomationProperties.Name="{Binding Name, StringFormat='Remove {0} from Cart'}"
+                        Click="RemoveFromCart_Click"/>
             </Grid>
         </DataTemplate>
 

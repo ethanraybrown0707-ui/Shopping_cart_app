@@ -5,9 +5,9 @@ using System.Windows;
 namespace ShoppingCartApp;
 
 /// <summary>
-/// Feature 1: a hardcoded product catalog, per-row "Add to Cart" buttons, a cart panel with a
-/// running total, and a Checkout button that clears the cart. Pure in-memory, no persistence -
-/// this is a UI test fixture, not a real store.
+/// A hardcoded product catalog, per-row "Add to Cart" buttons, a cart panel (with a per-row
+/// "Remove" button and a running total), and a Checkout button that clears the cart. Pure
+/// in-memory, no persistence - this is a UI test fixture, not a real store.
 /// </summary>
 public partial class MainWindow : Window
 {
@@ -19,7 +19,8 @@ public partial class MainWindow : Window
         new Product { Name = "Desk Lamp", Price = 18.75m },
     });
 
-    public ObservableCollection<Product> Cart { get; } = new();
+    // Holds CartLine, not Product - see the remarks on CartLine in Models.cs for why.
+    public ObservableCollection<CartLine> Cart { get; } = new();
 
     public MainWindow()
     {
@@ -33,9 +34,19 @@ public partial class MainWindow : Window
     {
         if (sender is FrameworkElement { Tag: Product product })
         {
-            Cart.Add(product);
+            Cart.Add(new CartLine { Product = product });
             UpdateTotal();
             StatusText.Text = $"Added \"{product.Name}\" to cart";
+        }
+    }
+
+    private void RemoveFromCart_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: CartLine line })
+        {
+            Cart.Remove(line);
+            UpdateTotal();
+            StatusText.Text = $"Removed \"{line.Name}\" from cart";
         }
     }
 
@@ -55,7 +66,7 @@ public partial class MainWindow : Window
 
     private void UpdateTotal()
     {
-        var total = Cart.Sum(p => p.Price);
+        var total = Cart.Sum(line => line.Product.Price);
         TotalText.Text = $"Total: {total:C}";
     }
 }
