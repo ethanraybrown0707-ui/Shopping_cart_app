@@ -1,12 +1,102 @@
-﻿<Window x:Class="ShoppingCartApp.MainWindow"
+<Window x:Class="ShoppingCartApp.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ShoppingCartApp"
         mc:Ignorable="d"
-        Title="Shopping Cart" Height="450" Width="800">
-    <Grid>
+        Title="Shopping Cart" Height="480" Width="760"
+        WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <DataTemplate x:Key="ProductTemplate">
+            <Grid Margin="4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="{Binding Name}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Text="{Binding DisplayPrice}" VerticalAlignment="Center"
+                           Margin="8,0" FontWeight="SemiBold"/>
+                <!-- AutomationId is the same on every row (it's a shared template); AutomationProperties.Name
+                     is bound per-row so tests can tell rows apart by product name. -->
+                <Button Grid.Column="2" Content="Add to Cart" Tag="{Binding}"
+                        AutomationProperties.AutomationId="AddToCartButton"
+                        AutomationProperties.Name="{Binding Name, StringFormat='Add {0} to Cart'}"
+                        Click="AddToCart_Click"/>
+            </Grid>
+        </DataTemplate>
 
-    </Grid>
+        <DataTemplate x:Key="CartItemTemplate">
+            <Grid Margin="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="{Binding Name}"/>
+                <TextBlock Grid.Column="1" Text="{Binding DisplayPrice}" Margin="8,0,0,0"/>
+            </Grid>
+        </DataTemplate>
+
+        <!-- Without this, UI Automation falls back to each row's ToString() for its accessible
+             name, which makes test logs useless for telling rows apart. -->
+        <Style x:Key="ItemContainerNameStyle" TargetType="ListBoxItem">
+            <Setter Property="AutomationProperties.Name" Value="{Binding Name}"/>
+        </Style>
+    </Window.Resources>
+
+    <DockPanel>
+        <StatusBar DockPanel.Dock="Bottom">
+            <StatusBarItem>
+                <TextBlock x:Name="StatusText" AutomationProperties.AutomationId="StatusText" Text="Ready"/>
+            </StatusBarItem>
+        </StatusBar>
+
+        <Grid Margin="10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="260"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Grid, not StackPanel, for each column's content: a vertical StackPanel measures
+                 children with unbounded width, so the catalog ListBox's wide rows (name + price
+                 + button) would grow past this column's allocated width and visually cover the
+                 cart panel next to it. Grid rows constrain width to the column properly. -->
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" Text="Products" FontWeight="Bold" FontSize="16" Margin="0,0,0,6"/>
+                <ListBox Grid.Row="1" x:Name="CatalogListBox"
+                         AutomationProperties.AutomationId="CatalogListBox"
+                         ItemTemplate="{StaticResource ProductTemplate}"
+                         ItemContainerStyle="{StaticResource ItemContainerNameStyle}"/>
+            </Grid>
+
+            <Grid Grid.Column="1" Margin="14,0,0,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="220"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" Text="Cart" FontWeight="Bold" FontSize="16" Margin="0,0,0,6"/>
+                <ListBox Grid.Row="1" x:Name="CartListBox"
+                         AutomationProperties.AutomationId="CartListBox"
+                         ItemTemplate="{StaticResource CartItemTemplate}"
+                         ItemContainerStyle="{StaticResource ItemContainerNameStyle}"/>
+
+                <!-- Text is set from code-behind at startup (UpdateTotal) rather than hardcoded
+                     here, so it always matches the runtime currency format ({0:C} follows the
+                     OS locale - e.g. "£0.00" on this machine, not necessarily "$0.00"). -->
+                <TextBlock Grid.Row="2" x:Name="TotalText" Margin="0,10,0,0" FontWeight="Bold"
+                           AutomationProperties.AutomationId="TotalText"/>
+
+                <Button Grid.Row="3" x:Name="CheckoutButton" Content="Checkout" Margin="0,10,0,0" Padding="8,4"
+                        AutomationProperties.AutomationId="CheckoutButton"
+                        Click="Checkout_Click"/>
+            </Grid>
+        </Grid>
+    </DockPanel>
 </Window>
