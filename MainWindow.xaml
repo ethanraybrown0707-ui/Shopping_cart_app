@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ShoppingCartApp"
         mc:Ignorable="d"
-        Title="Shopping Cart" Height="480" Width="760"
+        Title="Shopping Cart" Height="480" Width="800"
         WindowStartupLocation="CenterScreen">
     <Window.Resources>
         <DataTemplate x:Key="ProductTemplate">
@@ -67,7 +67,7 @@
         <Grid Margin="10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="260"/>
+                <ColumnDefinition Width="300"/>
             </Grid.ColumnDefinitions>
 
             <!-- Grid, not StackPanel, for each column's content: a vertical StackPanel measures
