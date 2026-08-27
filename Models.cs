@@ -59,6 +59,15 @@ public class CartLine : INotifyPropertyChanged
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 }
 
+/// <summary>How a Basket's Catalog should be ordered. Default preserves Product.DefaultCatalog's
+/// own order (no sort applied at all, rather than sorting by some implicit key).</summary>
+public enum ProductSortOrder
+{
+    Default,
+    NameAscending,
+    PriceAscending,
+}
+
 /// <summary>
 /// One tab's worth of state: its own catalog + cart, fully independent of every other Basket.
 ///
@@ -68,10 +77,11 @@ public class CartLine : INotifyPropertyChanged
 /// Product, which never changes), so it needs INotifyPropertyChanged for the bound TabItem
 /// header/AutomationProperties.Name to pick up a renumber.
 ///
-/// StatusMessage lives here, not just as a TextBlock.Text set from code-behind, because WPF's
-/// TabControl reuses a single BasketControl visual instance across tab switches (only rebinding
-/// DataContext) rather than creating a fresh one per tab - without storing it per-Basket, the
-/// status line would leak whichever basket was viewed last instead of showing this basket's own.
+/// StatusMessage and SortOrder live here, not just as transient control state (TextBlock.Text /
+/// ComboBox.SelectedIndex), because WPF's TabControl reuses a single BasketControl visual
+/// instance across tab switches (only rebinding DataContext) rather than creating a fresh one
+/// per tab - without storing them per-Basket, both would leak whichever basket was viewed last
+/// instead of reflecting this basket's own status/sort choice.
 /// </summary>
 public class Basket : INotifyPropertyChanged
 {
@@ -91,6 +101,7 @@ public class Basket : INotifyPropertyChanged
     public ObservableCollection<Product> Catalog { get; } = new(Product.DefaultCatalog);
     public ObservableCollection<CartLine> Cart { get; } = new();
     public string StatusMessage { get; set; } = "Ready";
+    public ProductSortOrder SortOrder { get; set; } = ProductSortOrder.Default;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 }

@@ -80,7 +80,29 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
-                <TextBlock Grid.Row="0" Text="Products" FontWeight="Bold" FontSize="16" Margin="0,0,0,6"/>
+                <Grid Grid.Row="0" Margin="0,0,0,6">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Products" FontWeight="Bold" FontSize="16" VerticalAlignment="Center"/>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="Sort:" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <!-- SelectedIndex/sort is set from code-behind per-Basket (see
+                             Basket.SortOrder's remarks) rather than bound, matching how
+                             StatusText/TotalText are already set imperatively in this file. -->
+                        <ComboBox x:Name="SortComboBox" Width="150"
+                                  AutomationProperties.AutomationId="SortComboBox"
+                                  SelectionChanged="SortComboBox_SelectionChanged">
+                            <ComboBoxItem Content="Default" Tag="Default"
+                                          AutomationProperties.AutomationId="SortDefaultItem"/>
+                            <ComboBoxItem Content="Name (A-Z)" Tag="NameAscending"
+                                          AutomationProperties.AutomationId="SortNameAscendingItem"/>
+                            <ComboBoxItem Content="Price (Low to High)" Tag="PriceAscending"
+                                          AutomationProperties.AutomationId="SortPriceAscendingItem"/>
+                        </ComboBox>
+                    </StackPanel>
+                </Grid>
                 <ListBox Grid.Row="1" x:Name="CatalogListBox"
                          AutomationProperties.AutomationId="CatalogListBox"
                          ItemTemplate="{StaticResource ProductTemplate}"

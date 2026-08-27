@@ -1,6 +1,9 @@
+using System;
+using System.ComponentModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 
 namespace ShoppingCartApp;
 
@@ -14,6 +17,7 @@ namespace ShoppingCartApp;
 /// Every place that used to write straight to StatusText.Text also writes through
 /// SetStatus(basket, ...), which stores the message on the Basket itself - see Basket.
 /// StatusMessage's remarks for why (TabControl reuses this control instance across tabs).
+/// SortComboBox follows the same pattern via ApplySort/basket.SortOrder.
 /// </summary>
 public partial class BasketControl : UserControl
 {
@@ -31,6 +35,44 @@ public partial class BasketControl : UserControl
         CartListBox.ItemsSource = basket.Cart;
         UpdateTotal(basket);
         StatusText.Text = basket.StatusMessage;
+
+        // Detached while syncing so this doesn't fire a redundant SelectionChanged - ApplySort
+        // below is the single source of truth for actually applying the sort.
+        SortComboBox.SelectionChanged -= SortComboBox_SelectionChanged;
+        SortComboBox.SelectedIndex = (int)basket.SortOrder;
+        SortComboBox.SelectionChanged += SortComboBox_SelectionChanged;
+        ApplySort(basket, basket.SortOrder);
+    }
+
+    private void SortComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (DataContext is not Basket basket) return;
+        if (SortComboBox.SelectedItem is not ComboBoxItem { Tag: string tag }) return;
+        if (!Enum.TryParse<ProductSortOrder>(tag, out var order)) return;
+
+        basket.SortOrder = order;
+        ApplySort(basket, order);
+    }
+
+    /// <summary>Sorts via the catalog's CollectionView rather than reordering basket.Catalog
+    /// itself, so the underlying collection (and Product.DefaultCatalog's original order that
+    /// every fresh Basket seeds from) is never mutated - only how this basket's list displays.</summary>
+    private void ApplySort(Basket basket, ProductSortOrder order)
+    {
+        var view = CollectionViewSource.GetDefaultView(basket.Catalog);
+        view.SortDescriptions.Clear();
+        switch (order)
+        {
+            case ProductSortOrder.NameAscending:
+                view.SortDescriptions.Add(new SortDescription(nameof(Product.Name), ListSortDirection.Ascending));
+                break;
+            case ProductSortOrder.PriceAscending:
+                view.SortDescriptions.Add(new SortDescription(nameof(Product.Price), ListSortDirection.Ascending));
+                break;
+            case ProductSortOrder.Default:
+            default:
+                break; // no SortDescriptions -> original catalog order
+        }
     }
 
     private void AddToCart_Click(object sender, RoutedEventArgs e)
