@@ -86,34 +86,39 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="0" Text="Products" FontWeight="Bold" FontSize="16" VerticalAlignment="Center"/>
+                    <!-- Every control below carries the same 4,0,0,0 margin (a label follows its
+                         own control with a wider 12,0,0,0 gap, marking a new group) so the
+                         spacing reads as consistent left-to-right instead of ad hoc per item. -->
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="Search:" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <TextBlock Text="Search:" VerticalAlignment="Center"/>
                         <!-- Text is set/read from code-behind per-Basket (see Basket.SearchText's
                              remarks) rather than bound, matching SortComboBox/StatusText/TotalText's
                              existing imperative-sync pattern in this file. -->
-                        <TextBox x:Name="SearchTextBox" Width="140"
+                        <TextBox x:Name="SearchTextBox" Width="110" Margin="4,0,0,0"
                                  AutomationProperties.AutomationId="SearchTextBox"
                                  VerticalContentAlignment="Center"
                                  TextChanged="SearchTextBox_TextChanged"/>
-                        <TextBlock Text="Sort:" VerticalAlignment="Center" Margin="8,0,4,0"/>
+                        <TextBlock Text="Sort:" VerticalAlignment="Center" Margin="12,0,0,0"/>
                         <!-- SelectedIndex/sort is set from code-behind per-Basket (see
                              Basket.SortOrder's remarks) rather than bound, matching how
                              StatusText/TotalText are already set imperatively in this file. -->
                         <!-- Item order here must match the ProductSortOrder enum's declaration
                              order 1:1 - SortComboBox.SelectedIndex is cast directly to/from that
-                             enum (see BasketControl.xaml.cs). -->
-                        <ComboBox x:Name="SortComboBox" Width="170"
+                             enum (see BasketControl.xaml.cs). Content text is kept short (arrows,
+                             not "(A-Z)"/"(Low to High)") so the box itself can stay narrow instead
+                             of dominating this row - Tag (what the code-behind reads) is unchanged. -->
+                        <ComboBox x:Name="SortComboBox" Width="90" Margin="4,0,0,0"
                                   AutomationProperties.AutomationId="SortComboBox"
                                   SelectionChanged="SortComboBox_SelectionChanged">
                             <ComboBoxItem Content="Default" Tag="Default"
                                           AutomationProperties.AutomationId="SortDefaultItem"/>
-                            <ComboBoxItem Content="Name (A-Z)" Tag="NameAscending"
+                            <ComboBoxItem Content="Name ↑" Tag="NameAscending"
                                           AutomationProperties.AutomationId="SortNameAscendingItem"/>
-                            <ComboBoxItem Content="Name (Z-A)" Tag="NameDescending"
+                            <ComboBoxItem Content="Name ↓" Tag="NameDescending"
                                           AutomationProperties.AutomationId="SortNameDescendingItem"/>
-                            <ComboBoxItem Content="Price (Low to High)" Tag="PriceAscending"
+                            <ComboBoxItem Content="Price ↑" Tag="PriceAscending"
                                           AutomationProperties.AutomationId="SortPriceAscendingItem"/>
-                            <ComboBoxItem Content="Price (High to Low)" Tag="PriceDescending"
+                            <ComboBoxItem Content="Price ↓" Tag="PriceDescending"
                                           AutomationProperties.AutomationId="SortPriceDescendingItem"/>
                         </ComboBox>
                     </StackPanel>
