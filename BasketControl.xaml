@@ -1,0 +1,115 @@
+<UserControl x:Class="ShoppingCartApp.BasketControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:ShoppingCartApp"
+             mc:Ignorable="d"
+             d:DesignHeight="420" d:DesignWidth="780">
+    <UserControl.Resources>
+        <DataTemplate x:Key="ProductTemplate">
+            <Grid Margin="4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="{Binding Name}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Text="{Binding DisplayPrice}" VerticalAlignment="Center"
+                           Margin="8,0" FontWeight="SemiBold"/>
+                <!-- AutomationId is the same on every row (it's a shared template); AutomationProperties.Name
+                     is bound per-row so tests can tell rows apart by product name. -->
+                <Button Grid.Column="2" Content="Add to Cart" Tag="{Binding}"
+                        AutomationProperties.AutomationId="AddToCartButton"
+                        AutomationProperties.Name="{Binding Name, StringFormat='Add {0} to Cart'}"
+                        Click="AddToCart_Click"/>
+            </Grid>
+        </DataTemplate>
+
+        <DataTemplate x:Key="CartItemTemplate">
+            <Grid Margin="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="{Binding Name}" VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis"/>
+                <TextBlock Grid.Column="1" Text="{Binding DisplayQuantity}" Margin="4,0" VerticalAlignment="Center"
+                           AutomationProperties.AutomationId="CartLineQuantityText"/>
+                <TextBlock Grid.Column="2" Text="{Binding DisplayLineTotal}" Margin="4,0" VerticalAlignment="Center"
+                           AutomationProperties.AutomationId="CartLineTotalText"/>
+                <!-- Same AutomationId-per-template / bound-Name-per-row pattern as Add to Cart.
+                     One click removes one unit; the row itself disappears once Quantity hits 0. -->
+                <Button Grid.Column="3" Content="Remove" Tag="{Binding}" Padding="4,1" FontSize="11"
+                        AutomationProperties.AutomationId="RemoveFromCartButton"
+                        AutomationProperties.Name="{Binding Name, StringFormat='Remove {0} from Cart'}"
+                        Click="RemoveFromCart_Click"/>
+            </Grid>
+        </DataTemplate>
+
+        <!-- Without this, UI Automation falls back to each row's ToString() for its accessible
+             name, which makes test logs useless for telling rows apart. -->
+        <Style x:Key="ItemContainerNameStyle" TargetType="ListBoxItem">
+            <Setter Property="AutomationProperties.Name" Value="{Binding Name}"/>
+        </Style>
+    </UserControl.Resources>
+
+    <DockPanel>
+        <!-- Per-basket status line - replaces the old window-level StatusBar now that each tab
+             has its own independent state to report on. -->
+        <StatusBar DockPanel.Dock="Bottom">
+            <StatusBarItem>
+                <TextBlock x:Name="StatusText" AutomationProperties.AutomationId="StatusText" Text="Ready"/>
+            </StatusBarItem>
+        </StatusBar>
+
+        <Grid Margin="10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="300"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Grid, not StackPanel, for each column's content: a vertical StackPanel measures
+                 children with unbounded width, so the catalog ListBox's wide rows (name + price
+                 + button) would grow past this column's allocated width and visually cover the
+                 cart panel next to it. Grid rows constrain width to the column properly. -->
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" Text="Products" FontWeight="Bold" FontSize="16" Margin="0,0,0,6"/>
+                <ListBox Grid.Row="1" x:Name="CatalogListBox"
+                         AutomationProperties.AutomationId="CatalogListBox"
+                         ItemTemplate="{StaticResource ProductTemplate}"
+                         ItemContainerStyle="{StaticResource ItemContainerNameStyle}"/>
+            </Grid>
+
+            <Grid Grid.Column="1" Margin="14,0,0,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="220"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" Text="Cart" FontWeight="Bold" FontSize="16" Margin="0,0,0,6"/>
+                <ListBox Grid.Row="1" x:Name="CartListBox"
+                         AutomationProperties.AutomationId="CartListBox"
+                         ItemTemplate="{StaticResource CartItemTemplate}"
+                         ItemContainerStyle="{StaticResource ItemContainerNameStyle}"/>
+
+                <!-- Text is set from code-behind at startup (UpdateTotal) rather than hardcoded
+                     here, so it always matches the runtime currency format ({0:C} follows the
+                     OS locale - e.g. "£0.00" on this machine, not necessarily "$0.00"). -->
+                <TextBlock Grid.Row="2" x:Name="TotalText" Margin="0,10,0,0" FontWeight="Bold"
+                           AutomationProperties.AutomationId="TotalText"/>
+
+                <Button Grid.Row="3" x:Name="CheckoutButton" Content="Checkout" Margin="0,10,0,0" Padding="8,4"
+                        AutomationProperties.AutomationId="CheckoutButton"
+                        Click="Checkout_Click"/>
+            </Grid>
+        </Grid>
+    </DockPanel>
+</UserControl>

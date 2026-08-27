@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 
 namespace ShoppingCartApp;
@@ -9,6 +10,16 @@ public class Product
     public required string Name { get; init; }
     public required decimal Price { get; init; }
     public string DisplayPrice => Price.ToString("C");
+
+    /// <summary>The catalog every new Basket seeds from. Product has no mutable state, so it's
+    /// safe for every basket's Catalog to wrap the same Product instances.</summary>
+    public static readonly Product[] DefaultCatalog =
+    {
+        new() { Name = "Wireless Mouse", Price = 24.99m },
+        new() { Name = "Mechanical Keyboard", Price = 79.99m },
+        new() { Name = "USB-C Hub", Price = 34.50m },
+        new() { Name = "Desk Lamp", Price = 18.75m },
+    };
 }
 
 /// <summary>
@@ -46,4 +57,40 @@ public class CartLine : INotifyPropertyChanged
 
     private void OnPropertyChanged(string propertyName) =>
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+}
+
+/// <summary>
+/// One tab's worth of state: its own catalog + cart, fully independent of every other Basket.
+///
+/// Header is positional, not a permanent identity - MainWindow renumbers every Basket's Header
+/// to match its left-to-right position ("Basket 1", "Basket 2", ...) after every add/close, so
+/// the leftmost tab always reads "Basket 1". That means Header can change after creation (unlike
+/// Product, which never changes), so it needs INotifyPropertyChanged for the bound TabItem
+/// header/AutomationProperties.Name to pick up a renumber.
+///
+/// StatusMessage lives here, not just as a TextBlock.Text set from code-behind, because WPF's
+/// TabControl reuses a single BasketControl visual instance across tab switches (only rebinding
+/// DataContext) rather than creating a fresh one per tab - without storing it per-Basket, the
+/// status line would leak whichever basket was viewed last instead of showing this basket's own.
+/// </summary>
+public class Basket : INotifyPropertyChanged
+{
+    private string _header = "";
+
+    public string Header
+    {
+        get => _header;
+        set
+        {
+            if (_header == value) return;
+            _header = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Header)));
+        }
+    }
+
+    public ObservableCollection<Product> Catalog { get; } = new(Product.DefaultCatalog);
+    public ObservableCollection<CartLine> Cart { get; } = new();
+    public string StatusMessage { get; set; } = "Ready";
+
+    public event PropertyChangedEventHandler? PropertyChanged;
 }

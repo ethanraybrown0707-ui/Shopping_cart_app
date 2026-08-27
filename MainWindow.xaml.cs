@@ -1,92 +1,57 @@
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Windows;
 
 namespace ShoppingCartApp;
 
 /// <summary>
-/// A hardcoded product catalog, per-row "Add to Cart" buttons, a cart panel (one row per
-/// distinct product, with a quantity, a per-row "Remove" button, and a running total), and a
-/// Checkout button that clears the cart. Pure in-memory, no persistence - this is a UI test
-/// fixture, not a real store.
+/// Hosts one or more independent baskets, each its own tab (own catalog + own cart). "New
+/// Basket" adds a tab; each tab's header has a close button. There must always be at least one
+/// basket open, so closing the last remaining tab is a no-op. All the actual catalog/cart/
+/// checkout logic lives per-tab in BasketControl - this window only manages which baskets exist.
+///
+/// Headers are positional, not permanent identities: after every add/close, RenumberBaskets
+/// relabels every Basket to match its left-to-right position, so the leftmost tab always reads
+/// "Basket 1" (rather than counting up forever and leaving gaps once a basket closes).
 /// </summary>
 public partial class MainWindow : Window
 {
-    public ObservableCollection<Product> Catalog { get; } = new(new[]
-    {
-        new Product { Name = "Wireless Mouse", Price = 24.99m },
-        new Product { Name = "Mechanical Keyboard", Price = 79.99m },
-        new Product { Name = "USB-C Hub", Price = 34.50m },
-        new Product { Name = "Desk Lamp", Price = 18.75m },
-    });
-
-    // At most one CartLine per Product - see the remarks on CartLine in Models.cs.
-    public ObservableCollection<CartLine> Cart { get; } = new();
+    public ObservableCollection<Basket> Baskets { get; } = new();
 
     public MainWindow()
     {
         InitializeComponent();
-        CatalogListBox.ItemsSource = Catalog;
-        CartListBox.ItemsSource = Cart;
-        UpdateTotal();
+        BasketsTabControl.ItemsSource = Baskets;
+
+        var firstBasket = new Basket();
+        Baskets.Add(firstBasket);
+        RenumberBaskets();
+        BasketsTabControl.SelectedItem = firstBasket;
     }
 
-    private void AddToCart_Click(object sender, RoutedEventArgs e)
+    private void NewBasketButton_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is FrameworkElement { Tag: Product product })
+        var basket = new Basket();
+        Baskets.Add(basket);
+        RenumberBaskets();
+        BasketsTabControl.SelectedItem = basket;
+    }
+
+    private void CloseBasket_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement { Tag: Basket basket }) return;
+
+        // Always keep at least one basket open.
+        if (Baskets.Count <= 1) return;
+
+        Baskets.Remove(basket);
+        RenumberBaskets();
+    }
+
+    private void RenumberBaskets()
+    {
+        for (var i = 0; i < Baskets.Count; i++)
         {
-            var existingLine = Cart.FirstOrDefault(line => line.Product == product);
-            if (existingLine is not null)
-            {
-                existingLine.Quantity++;
-            }
-            else
-            {
-                Cart.Add(new CartLine { Product = product });
-            }
-
-            UpdateTotal();
-            StatusText.Text = $"Added \"{product.Name}\" to cart";
+            Baskets[i].Header = $"Basket {i + 1}";
         }
-    }
-
-    private void RemoveFromCart_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is FrameworkElement { Tag: CartLine line })
-        {
-            // One click removes one unit; the row itself only disappears once its quantity
-            // reaches 0, mirroring how Add to Cart builds the quantity up.
-            if (line.Quantity > 1)
-            {
-                line.Quantity--;
-            }
-            else
-            {
-                Cart.Remove(line);
-            }
-
-            UpdateTotal();
-            StatusText.Text = $"Removed \"{line.Name}\" from cart";
-        }
-    }
-
-    private void Checkout_Click(object sender, RoutedEventArgs e)
-    {
-        if (Cart.Count == 0)
-        {
-            StatusText.Text = "Cart is empty";
-            return;
-        }
-
-        var itemCount = Cart.Sum(line => line.Quantity);
-        Cart.Clear();
-        UpdateTotal();
-        StatusText.Text = $"Order placed - {itemCount} item(s) checked out";
-    }
-
-    private void UpdateTotal()
-    {
-        var total = Cart.Sum(line => line.LineTotal);
-        TotalText.Text = $"Total: {total:C}";
     }
 }

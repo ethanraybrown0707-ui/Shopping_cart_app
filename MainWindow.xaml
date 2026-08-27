@@ -8,107 +8,90 @@
         Title="Shopping Cart" Height="480" Width="800"
         WindowStartupLocation="CenterScreen">
     <Window.Resources>
-        <DataTemplate x:Key="ProductTemplate">
-            <Grid Margin="4">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="{Binding Name}" VerticalAlignment="Center"/>
-                <TextBlock Grid.Column="1" Text="{Binding DisplayPrice}" VerticalAlignment="Center"
-                           Margin="8,0" FontWeight="SemiBold"/>
-                <!-- AutomationId is the same on every row (it's a shared template); AutomationProperties.Name
-                     is bound per-row so tests can tell rows apart by product name. -->
-                <Button Grid.Column="2" Content="Add to Cart" Tag="{Binding}"
-                        AutomationProperties.AutomationId="AddToCartButton"
-                        AutomationProperties.Name="{Binding Name, StringFormat='Add {0} to Cart'}"
-                        Click="AddToCart_Click"/>
-            </Grid>
-        </DataTemplate>
-
-        <DataTemplate x:Key="CartItemTemplate">
-            <Grid Margin="2">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="{Binding Name}" VerticalAlignment="Center"
-                           TextTrimming="CharacterEllipsis"/>
-                <TextBlock Grid.Column="1" Text="{Binding DisplayQuantity}" Margin="4,0" VerticalAlignment="Center"
-                           AutomationProperties.AutomationId="CartLineQuantityText"/>
-                <TextBlock Grid.Column="2" Text="{Binding DisplayLineTotal}" Margin="4,0" VerticalAlignment="Center"
-                           AutomationProperties.AutomationId="CartLineTotalText"/>
-                <!-- Same AutomationId-per-template / bound-Name-per-row pattern as Add to Cart.
-                     One click removes one unit; the row itself disappears once Quantity hits 0. -->
-                <Button Grid.Column="3" Content="Remove" Tag="{Binding}" Padding="4,1" FontSize="11"
-                        AutomationProperties.AutomationId="RemoveFromCartButton"
-                        AutomationProperties.Name="{Binding Name, StringFormat='Remove {0} from Cart'}"
-                        Click="RemoveFromCart_Click"/>
-            </Grid>
-        </DataTemplate>
-
-        <!-- Without this, UI Automation falls back to each row's ToString() for its accessible
-             name, which makes test logs useless for telling rows apart. -->
-        <Style x:Key="ItemContainerNameStyle" TargetType="ListBoxItem">
-            <Setter Property="AutomationProperties.Name" Value="{Binding Name}"/>
+        <!-- Sets the accessible name/id on each generated TabItem so a test can find a specific
+             basket by its Header (e.g. "Basket 2") instead of by position. -->
+        <Style x:Key="BasketTabItemStyle" TargetType="TabItem">
+            <Setter Property="AutomationProperties.Name" Value="{Binding Header}"/>
+            <Setter Property="AutomationProperties.AutomationId" Value="BasketTabItem"/>
         </Style>
+
+        <!-- Flat, icon-only look for the per-tab close button, sized to sit inline with the
+             tab's own text instead of reading as a separate boxed control. -->
+        <Style x:Key="TabGlyphButtonStyle" TargetType="Button">
+            <Setter Property="Width" Value="18"/>
+            <Setter Property="Height" Value="18"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg" Background="{TemplateBinding Background}" CornerRadius="9">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#22000000"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <DataTemplate x:Key="BasketHeaderTemplate">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="{Binding Header}" VerticalAlignment="Center"/>
+                <!-- Tag carries the Basket this header belongs to, same Tag={Binding} pattern
+                     BasketControl already uses for its per-row Add/Remove buttons. -->
+                <Button Content="x" Tag="{Binding}" Margin="8,0,0,0"
+                        Style="{StaticResource TabGlyphButtonStyle}"
+                        AutomationProperties.AutomationId="CloseBasketButton"
+                        AutomationProperties.Name="{Binding Header, StringFormat='Close {0}'}"
+                        Click="CloseBasket_Click"/>
+            </StackPanel>
+        </DataTemplate>
+
+        <DataTemplate x:Key="BasketContentTemplate">
+            <local:BasketControl/>
+        </DataTemplate>
+
+        <!-- Puts a "+" button directly in the tab strip, next to the tab headers themselves
+             (Chrome/Google-tabs style), instead of a separate labeled button above the tabs.
+             Only the header row changes shape from the default TabControl template - the
+             TabPanel (IsItemsHost) and the SelectedContent presenter are still the same named
+             parts, so ItemContainerStyle/ItemTemplate/ContentTemplate above keep working as-is. -->
+        <!-- TargetType is the local:TabControlWithAddButton subclass (see that file for why a
+             plain TabControl won't work here): its automation peer specifically looks for this
+             "+" button by its Tag marker and folds it into the automation tree, since a stock
+             TabControl's peer only ever reports TabItem children and would otherwise make this
+             button impossible for a test to find, despite it rendering fine on screen. -->
+        <ControlTemplate x:Key="TabsWithAddButtonTemplate" TargetType="local:TabControlWithAddButton">
+            <DockPanel>
+                <DockPanel DockPanel.Dock="Top" LastChildFill="False">
+                    <TabPanel x:Name="HeaderPanel" DockPanel.Dock="Left"
+                              IsItemsHost="True" Panel.ZIndex="1"/>
+                    <Button DockPanel.Dock="Left" Content="+" Margin="6,4,0,0"
+                            VerticalAlignment="Bottom"
+                            Tag="AddButton"
+                            Style="{StaticResource TabGlyphButtonStyle}"
+                            AutomationProperties.AutomationId="NewBasketButton"
+                            AutomationProperties.Name="New Basket"
+                            Click="NewBasketButton_Click"/>
+                </DockPanel>
+                <ContentPresenter x:Name="PART_SelectedContentHost" ContentSource="SelectedContent"/>
+            </DockPanel>
+        </ControlTemplate>
     </Window.Resources>
 
-    <DockPanel>
-        <StatusBar DockPanel.Dock="Bottom">
-            <StatusBarItem>
-                <TextBlock x:Name="StatusText" AutomationProperties.AutomationId="StatusText" Text="Ready"/>
-            </StatusBarItem>
-        </StatusBar>
-
-        <Grid Margin="10">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="300"/>
-            </Grid.ColumnDefinitions>
-
-            <!-- Grid, not StackPanel, for each column's content: a vertical StackPanel measures
-                 children with unbounded width, so the catalog ListBox's wide rows (name + price
-                 + button) would grow past this column's allocated width and visually cover the
-                 cart panel next to it. Grid rows constrain width to the column properly. -->
-            <Grid Grid.Column="0">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-                <TextBlock Grid.Row="0" Text="Products" FontWeight="Bold" FontSize="16" Margin="0,0,0,6"/>
-                <ListBox Grid.Row="1" x:Name="CatalogListBox"
-                         AutomationProperties.AutomationId="CatalogListBox"
-                         ItemTemplate="{StaticResource ProductTemplate}"
-                         ItemContainerStyle="{StaticResource ItemContainerNameStyle}"/>
-            </Grid>
-
-            <Grid Grid.Column="1" Margin="14,0,0,0">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="220"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-                <TextBlock Grid.Row="0" Text="Cart" FontWeight="Bold" FontSize="16" Margin="0,0,0,6"/>
-                <ListBox Grid.Row="1" x:Name="CartListBox"
-                         AutomationProperties.AutomationId="CartListBox"
-                         ItemTemplate="{StaticResource CartItemTemplate}"
-                         ItemContainerStyle="{StaticResource ItemContainerNameStyle}"/>
-
-                <!-- Text is set from code-behind at startup (UpdateTotal) rather than hardcoded
-                     here, so it always matches the runtime currency format ({0:C} follows the
-                     OS locale - e.g. "£0.00" on this machine, not necessarily "$0.00"). -->
-                <TextBlock Grid.Row="2" x:Name="TotalText" Margin="0,10,0,0" FontWeight="Bold"
-                           AutomationProperties.AutomationId="TotalText"/>
-
-                <Button Grid.Row="3" x:Name="CheckoutButton" Content="Checkout" Margin="0,10,0,0" Padding="8,4"
-                        AutomationProperties.AutomationId="CheckoutButton"
-                        Click="Checkout_Click"/>
-            </Grid>
-        </Grid>
-    </DockPanel>
+    <local:TabControlWithAddButton x:Name="BasketsTabControl"
+                AutomationProperties.AutomationId="BasketsTabControl"
+                Template="{StaticResource TabsWithAddButtonTemplate}"
+                ItemContainerStyle="{StaticResource BasketTabItemStyle}"
+                ItemTemplate="{StaticResource BasketHeaderTemplate}"
+                ContentTemplate="{StaticResource BasketContentTemplate}"
+                Margin="10"/>
 </Window>
