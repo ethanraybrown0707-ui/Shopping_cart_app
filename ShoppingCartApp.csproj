@@ -8,4 +8,14 @@
     <UseWPF>true</UseWPF>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <!-- Attribution only - this is a text field embedded in the binary (visible under the
+         .exe's Properties > Details tab), not a cryptographic signature. It does not affect
+         Smart App Control or SmartScreen; see sign-exe.ps1 for the actual code-signing step,
+         which also doesn't satisfy Smart App Control (see that script's comments for why). -->
+    <Company>Ethan Brown</Company>
+    <Authors>Ethan Brown</Authors>
+    <Product>ShoppingCartApp</Product>
+  </PropertyGroup>
+
 </Project>
