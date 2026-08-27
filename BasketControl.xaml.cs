@@ -131,6 +131,22 @@ public partial class BasketControl : UserControl
         }
 
         var itemCount = basket.Cart.Sum(line => line.Quantity);
+
+        // Snapshot the cart into an OrderRecord before clearing it - CartLine itself is about to
+        // be discarded, and OrderHistoryStore needs plain data it can serialize independently of
+        // this basket's live state.
+        OrderHistoryStore.Add(new OrderRecord
+        {
+            PlacedAt = DateTime.Now,
+            Total = basket.Cart.Sum(line => line.LineTotal),
+            Lines = basket.Cart.Select(line => new OrderLineRecord
+            {
+                ProductName = line.Name,
+                Quantity = line.Quantity,
+                LineTotal = line.LineTotal,
+            }).ToList(),
+        });
+
         basket.Cart.Clear();
         UpdateTotal(basket);
         SetStatus(basket, $"Order placed - {itemCount} item(s) checked out");

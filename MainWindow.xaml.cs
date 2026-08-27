@@ -47,6 +47,11 @@ public partial class MainWindow : Window
         RenumberBaskets();
     }
 
+    private void OrderHistoryMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        new OrderHistoryWindow { Owner = this }.Show();
+    }
+
     private void RenumberBaskets()
     {
         for (var i = 0; i < Baskets.Count; i++)

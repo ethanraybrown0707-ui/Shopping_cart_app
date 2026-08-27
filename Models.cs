@@ -1,5 +1,9 @@
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
+using System.Text.Json.Serialization;
 
 namespace ShoppingCartApp;
 
@@ -106,4 +110,35 @@ public class Basket : INotifyPropertyChanged
     public ProductSortOrder SortOrder { get; set; } = ProductSortOrder.Default;
 
     public event PropertyChangedEventHandler? PropertyChanged;
+}
+
+/// <summary>One line of a completed order - a frozen snapshot of a CartLine at checkout time
+/// (plain data, not a live reference to it), since the CartLine itself gets cleared/discarded
+/// once the order is placed.</summary>
+public class OrderLineRecord
+{
+    public string ProductName { get; set; } = "";
+    public int Quantity { get; set; }
+    public decimal LineTotal { get; set; }
+
+    // Computed, not persisted data - [JsonIgnore] keeps it out of order-history.json so the file
+    // stays pure data and never carries a stale rendering of a format string that might change.
+    [JsonIgnore]
+    public string Display => $"{ProductName} x{Quantity} - {LineTotal:C}";
+}
+
+/// <summary>
+/// A completed checkout, persisted to disk (see OrderHistoryStore) so it survives app restarts.
+/// One shared history across every basket, not per-basket - basket tabs are transient
+/// (renumbered, closable), so tying history to a specific tab wouldn't survive closing it.
+/// </summary>
+public class OrderRecord
+{
+    public DateTime PlacedAt { get; set; }
+    public List<OrderLineRecord> Lines { get; set; } = new();
+    public decimal Total { get; set; }
+
+    [JsonIgnore]
+    public string DisplaySummary =>
+        $"{PlacedAt:yyyy-MM-dd HH:mm} - {Lines.Sum(l => l.Quantity)} item(s) - {Total:C}";
 }

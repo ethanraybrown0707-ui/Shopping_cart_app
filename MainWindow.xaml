@@ -87,11 +87,20 @@
         </ControlTemplate>
     </Window.Resources>
 
-    <local:TabControlWithAddButton x:Name="BasketsTabControl"
-                AutomationProperties.AutomationId="BasketsTabControl"
-                Template="{StaticResource TabsWithAddButtonTemplate}"
-                ItemContainerStyle="{StaticResource BasketTabItemStyle}"
-                ItemTemplate="{StaticResource BasketHeaderTemplate}"
-                ContentTemplate="{StaticResource BasketContentTemplate}"
-                Margin="10"/>
+    <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="_History">
+                <MenuItem Header="_Order History..." Click="OrderHistoryMenuItem_Click"
+                          AutomationProperties.AutomationId="OrderHistoryMenuItem"/>
+            </MenuItem>
+        </Menu>
+
+        <local:TabControlWithAddButton x:Name="BasketsTabControl"
+                    AutomationProperties.AutomationId="BasketsTabControl"
+                    Template="{StaticResource TabsWithAddButtonTemplate}"
+                    ItemContainerStyle="{StaticResource BasketTabItemStyle}"
+                    ItemTemplate="{StaticResource BasketHeaderTemplate}"
+                    ContentTemplate="{StaticResource BasketContentTemplate}"
+                    Margin="10"/>
+    </DockPanel>
 </Window>
