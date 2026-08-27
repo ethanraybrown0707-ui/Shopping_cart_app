@@ -23,6 +23,11 @@ public class Product
         new() { Name = "Mechanical Keyboard", Price = 79.99m },
         new() { Name = "USB-C Hub", Price = 34.50m },
         new() { Name = "Desk Lamp", Price = 18.75m },
+        new() { Name = "Webcam", Price = 45.00m },
+        new() { Name = "Laptop Stand", Price = 29.99m },
+        new() { Name = "Wireless Charger", Price = 22.50m },
+        new() { Name = "Bluetooth Speaker", Price = 39.99m },
+        new() { Name = "Monitor Arm", Price = 65.00m },
     };
 }
 
@@ -108,6 +113,11 @@ public class Basket : INotifyPropertyChanged
     public ObservableCollection<CartLine> Cart { get; } = new();
     public string StatusMessage { get; set; } = "Ready";
     public ProductSortOrder SortOrder { get; set; } = ProductSortOrder.Default;
+
+    // Same reasoning as StatusMessage/SortOrder above - stored on the Basket, not just
+    // SearchBox.Text, so switching tabs doesn't leak one basket's search text into another's
+    // reused BasketControl instance.
+    public string SearchText { get; set; } = "";
 
     public event PropertyChangedEventHandler? PropertyChanged;
 }

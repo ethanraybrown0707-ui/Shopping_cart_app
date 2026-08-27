@@ -41,7 +41,35 @@ public partial class BasketControl : UserControl
         SortComboBox.SelectionChanged -= SortComboBox_SelectionChanged;
         SortComboBox.SelectedIndex = (int)basket.SortOrder;
         SortComboBox.SelectionChanged += SortComboBox_SelectionChanged;
+
+        // Same detach/reattach reasoning as SortComboBox above - avoids a redundant
+        // TextChanged firing while syncing the box to this basket's own search text.
+        SearchTextBox.TextChanged -= SearchTextBox_TextChanged;
+        SearchTextBox.Text = basket.SearchText;
+        SearchTextBox.TextChanged += SearchTextBox_TextChanged;
+
         ApplySort(basket, basket.SortOrder);
+        ApplyFilter(basket, basket.SearchText);
+    }
+
+    private void SearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (DataContext is not Basket basket) return;
+
+        basket.SearchText = SearchTextBox.Text;
+        ApplyFilter(basket, basket.SearchText);
+    }
+
+    /// <summary>Filters via the catalog's CollectionView (same mechanism ApplySort uses for
+    /// sorting) rather than swapping ItemsSource, so filtering and sorting compose without
+    /// interfering with each other and basket.Catalog itself is never mutated.</summary>
+    private void ApplyFilter(Basket basket, string searchText)
+    {
+        var view = CollectionViewSource.GetDefaultView(basket.Catalog);
+        view.Filter = string.IsNullOrWhiteSpace(searchText)
+            ? null
+            : item => item is Product product &&
+                      product.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase);
     }
 
     private void SortComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
