@@ -65,7 +65,9 @@ public enum ProductSortOrder
 {
     Default,
     NameAscending,
+    NameDescending,
     PriceAscending,
+    PriceDescending,
 }
 
 /// <summary>

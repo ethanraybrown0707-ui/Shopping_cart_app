@@ -66,8 +66,14 @@ public partial class BasketControl : UserControl
             case ProductSortOrder.NameAscending:
                 view.SortDescriptions.Add(new SortDescription(nameof(Product.Name), ListSortDirection.Ascending));
                 break;
+            case ProductSortOrder.NameDescending:
+                view.SortDescriptions.Add(new SortDescription(nameof(Product.Name), ListSortDirection.Descending));
+                break;
             case ProductSortOrder.PriceAscending:
                 view.SortDescriptions.Add(new SortDescription(nameof(Product.Price), ListSortDirection.Ascending));
+                break;
+            case ProductSortOrder.PriceDescending:
+                view.SortDescriptions.Add(new SortDescription(nameof(Product.Price), ListSortDirection.Descending));
                 break;
             case ProductSortOrder.Default:
             default:

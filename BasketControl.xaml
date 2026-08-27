@@ -91,15 +91,22 @@
                         <!-- SelectedIndex/sort is set from code-behind per-Basket (see
                              Basket.SortOrder's remarks) rather than bound, matching how
                              StatusText/TotalText are already set imperatively in this file. -->
-                        <ComboBox x:Name="SortComboBox" Width="150"
+                        <!-- Item order here must match the ProductSortOrder enum's declaration
+                             order 1:1 - SortComboBox.SelectedIndex is cast directly to/from that
+                             enum (see BasketControl.xaml.cs). -->
+                        <ComboBox x:Name="SortComboBox" Width="170"
                                   AutomationProperties.AutomationId="SortComboBox"
                                   SelectionChanged="SortComboBox_SelectionChanged">
                             <ComboBoxItem Content="Default" Tag="Default"
                                           AutomationProperties.AutomationId="SortDefaultItem"/>
                             <ComboBoxItem Content="Name (A-Z)" Tag="NameAscending"
                                           AutomationProperties.AutomationId="SortNameAscendingItem"/>
+                            <ComboBoxItem Content="Name (Z-A)" Tag="NameDescending"
+                                          AutomationProperties.AutomationId="SortNameDescendingItem"/>
                             <ComboBoxItem Content="Price (Low to High)" Tag="PriceAscending"
                                           AutomationProperties.AutomationId="SortPriceAscendingItem"/>
+                            <ComboBoxItem Content="Price (High to Low)" Tag="PriceDescending"
+                                          AutomationProperties.AutomationId="SortPriceDescendingItem"/>
                         </ComboBox>
                     </StackPanel>
                 </Grid>
