@@ -64,6 +64,12 @@ public class Product : INotifyPropertyChanged
         new() { CatalogPosition = 6, Name = "Wireless Charger", Price = 22.50m },
         new() { CatalogPosition = 7, Name = "Bluetooth Speaker", Price = 39.99m },
         new() { CatalogPosition = 8, Name = "Monitor Arm", Price = 65.00m },
+        new() { CatalogPosition = 9, Name = "Noise-Cancelling Headphones", Price = 129.99m },
+        new() { CatalogPosition = 10, Name = "Portable SSD", Price = 89.99m },
+        new() { CatalogPosition = 11, Name = "HDMI Cable", Price = 9.99m },
+        new() { CatalogPosition = 12, Name = "Laptop Backpack", Price = 54.99m },
+        new() { CatalogPosition = 13, Name = "Ergonomic Footrest", Price = 27.50m },
+        new() { CatalogPosition = 14, Name = "USB Microphone", Price = 69.00m },
     };
 }
 

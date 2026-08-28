@@ -192,8 +192,14 @@
                                   AutomationProperties.Name="Show favourites only"/>
                     </StackPanel>
                 </Grid>
+                <!-- Virtualization off: the catalog is a fixed ~15 rows, and each row's
+                     Images menu / favourite checkbox must be in the automation tree (for a
+                     screen reader, and for the verifier's per-product checks) even while
+                     scrolled out of view. Realizing every row up front is negligible at this
+                     size and avoids the offscreen rows dropping out of UIA. -->
                 <ListBox Grid.Row="1" x:Name="CatalogListBox"
                          AutomationProperties.AutomationId="CatalogListBox"
+                         VirtualizingStackPanel.IsVirtualizing="False"
                          ItemTemplate="{StaticResource ProductTemplate}"
                          ItemContainerStyle="{StaticResource ItemContainerNameStyle}"/>
             </Grid>
