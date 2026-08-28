@@ -9,6 +9,23 @@
     <DockPanel Margin="10">
         <TextBlock DockPanel.Dock="Top" Text="Order History" FontWeight="Bold" FontSize="16" Margin="0,0,0,8"/>
 
+        <!-- Sorts this window's view of the history, not OrderHistoryStore.Orders itself (see
+             the code-behind) - the persisted order is left alone. Tag values map 1:1 to the
+             switch in OrderHistoryWindow.ApplySort. -->
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+            <TextBlock Text="Sort:" VerticalAlignment="Center"/>
+            <ComboBox x:Name="HistorySortComboBox" Width="150" Margin="6,0,0,0"
+                      AutomationProperties.AutomationId="HistorySortComboBox"
+                      SelectionChanged="HistorySortComboBox_SelectionChanged">
+                <ComboBoxItem Content="Newest first" Tag="Newest"
+                              AutomationProperties.AutomationId="HistorySortNewestItem"/>
+                <ComboBoxItem Content="Total: Low to High" Tag="TotalAscending"
+                              AutomationProperties.AutomationId="HistorySortTotalAscendingItem"/>
+                <ComboBoxItem Content="Total: High to Low" Tag="TotalDescending"
+                              AutomationProperties.AutomationId="HistorySortTotalDescendingItem"/>
+            </ComboBox>
+        </StackPanel>
+
         <!-- Shown only when there's nothing to list yet - a bare empty ListBox reads as broken,
              not "no orders yet". -->
         <TextBlock DockPanel.Dock="Top" x:Name="EmptyText" Text="No orders placed yet."
