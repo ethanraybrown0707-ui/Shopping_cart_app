@@ -37,17 +37,23 @@
                 <!-- "Images" dropdown: opens a menu of per-product image-search links, each
                      launched in the default browser (BasketControl.OpenImageLink_Click).
                      Same shared-AutomationId / bound-Name-per-row pattern as Add to Cart -
-                     the child link items share ProductImageLinkItem across every row too. -->
+                     the child link items share ProductImageLinkItem across every row too.
+                     Each link's target URL is in Tag (what the click handler opens) and also
+                     in AutomationProperties.HelpText - so a screen reader announces where the
+                     link goes, and a test can read/verify the exact destination. -->
                 <Menu Grid.Column="3" Margin="8,0,0,0" Background="Transparent" VerticalAlignment="Center">
                     <MenuItem Header="Images ▾" Style="{StaticResource ImagesMenuItemStyle}"
                               AutomationProperties.AutomationId="ProductImagesMenuItem"
                               AutomationProperties.Name="{Binding Name, StringFormat='Images for {0}'}">
                         <MenuItem Header="Google Images" Tag="{Binding GoogleImagesUrl}" Click="OpenImageLink_Click"
-                                  AutomationProperties.AutomationId="ProductImageLinkItem"/>
+                                  AutomationProperties.AutomationId="ProductImageLinkItem"
+                                  AutomationProperties.HelpText="{Binding GoogleImagesUrl}"/>
                         <MenuItem Header="Bing Images" Tag="{Binding BingImagesUrl}" Click="OpenImageLink_Click"
-                                  AutomationProperties.AutomationId="ProductImageLinkItem"/>
+                                  AutomationProperties.AutomationId="ProductImageLinkItem"
+                                  AutomationProperties.HelpText="{Binding BingImagesUrl}"/>
                         <MenuItem Header="Wikipedia" Tag="{Binding WikipediaUrl}" Click="OpenImageLink_Click"
-                                  AutomationProperties.AutomationId="ProductImageLinkItem"/>
+                                  AutomationProperties.AutomationId="ProductImageLinkItem"
+                                  AutomationProperties.HelpText="{Binding WikipediaUrl}"/>
                     </MenuItem>
                 </Menu>
             </Grid>
