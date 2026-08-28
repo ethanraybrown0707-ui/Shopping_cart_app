@@ -35,16 +35,24 @@ public partial class BasketControl : UserControl
         CatalogListBox.ItemsSource = basket.Catalog;
         CartListBox.ItemsSource = basket.Cart;
 
-        // Live sorting so that, while the "Favourites first" sort is active, ticking a
-        // product's checkbox re-floats it immediately - without routing through the checkbox's
-        // Click event, which only fires for a real user click, not a programmatic/AutomationPeer
-        // toggle. Only IsFavourite is watched; Name/Price never change after creation.
+        // Live shaping keyed on IsFavourite so that toggling a product's checkbox updates the
+        // view immediately, without routing through the checkbox's Click event (which only
+        // fires for a real user click, not a programmatic/AutomationPeer toggle):
+        //  - live sorting: re-floats the item while the "Favourites first" sort is active;
+        //  - live filtering: drops the item out while the "favourites only" filter is on.
+        // Only IsFavourite is watched; Name/Price never change after creation.
         if (CollectionViewSource.GetDefaultView(basket.Catalog) is ICollectionViewLiveShaping live)
         {
             live.IsLiveSorting = true;
             if (!live.LiveSortingProperties.Contains(nameof(Product.IsFavourite)))
             {
                 live.LiveSortingProperties.Add(nameof(Product.IsFavourite));
+            }
+
+            live.IsLiveFiltering = true;
+            if (!live.LiveFilteringProperties.Contains(nameof(Product.IsFavourite)))
+            {
+                live.LiveFilteringProperties.Add(nameof(Product.IsFavourite));
             }
         }
 
@@ -63,8 +71,16 @@ public partial class BasketControl : UserControl
         SearchTextBox.Text = basket.SearchText;
         SearchTextBox.TextChanged += SearchTextBox_TextChanged;
 
+        // Same detach/reattach reasoning as SortComboBox/SearchTextBox - Checked/Unchecked
+        // (unlike Click) fire on a programmatic IsChecked change too.
+        FavouritesOnlyCheckBox.Checked -= FavouritesOnlyCheckBox_Toggled;
+        FavouritesOnlyCheckBox.Unchecked -= FavouritesOnlyCheckBox_Toggled;
+        FavouritesOnlyCheckBox.IsChecked = basket.FavouritesOnly;
+        FavouritesOnlyCheckBox.Checked += FavouritesOnlyCheckBox_Toggled;
+        FavouritesOnlyCheckBox.Unchecked += FavouritesOnlyCheckBox_Toggled;
+
         ApplySort(basket, basket.SortOrder);
-        ApplyFilter(basket, basket.SearchText);
+        ApplyFilter(basket);
     }
 
     private void SearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
@@ -72,19 +88,37 @@ public partial class BasketControl : UserControl
         if (DataContext is not Basket basket) return;
 
         basket.SearchText = SearchTextBox.Text;
-        ApplyFilter(basket, basket.SearchText);
+        ApplyFilter(basket);
+    }
+
+    private void FavouritesOnlyCheckBox_Toggled(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not Basket basket) return;
+
+        basket.FavouritesOnly = FavouritesOnlyCheckBox.IsChecked == true;
+        ApplyFilter(basket);
+        SetStatus(basket, basket.FavouritesOnly ? "Showing favourites only" : "Showing all products");
     }
 
     /// <summary>Filters via the catalog's CollectionView (same mechanism ApplySort uses for
     /// sorting) rather than swapping ItemsSource, so filtering and sorting compose without
-    /// interfering with each other and basket.Catalog itself is never mutated.</summary>
-    private void ApplyFilter(Basket basket, string searchText)
+    /// interfering with each other and basket.Catalog itself is never mutated. Two conditions,
+    /// AND-ed: the search text (if any) and, when "favourites only" is on, IsFavourite.</summary>
+    private void ApplyFilter(Basket basket)
     {
         var view = CollectionViewSource.GetDefaultView(basket.Catalog);
-        view.Filter = string.IsNullOrWhiteSpace(searchText)
-            ? null
-            : item => item is Product product &&
-                      product.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase);
+        var search = basket.SearchText;
+
+        if (string.IsNullOrWhiteSpace(search) && !basket.FavouritesOnly)
+        {
+            view.Filter = null;
+            return;
+        }
+
+        view.Filter = item =>
+            item is Product product
+            && (string.IsNullOrWhiteSpace(search) || product.Name.Contains(search, StringComparison.OrdinalIgnoreCase))
+            && (!basket.FavouritesOnly || product.IsFavourite);
     }
 
     private void SortComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)

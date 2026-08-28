@@ -153,9 +153,10 @@ public class Basket : INotifyPropertyChanged
     public ProductSortOrder SortOrder { get; set; } = ProductSortOrder.Default;
 
     // Same reasoning as StatusMessage/SortOrder above - stored on the Basket, not just
-    // SearchBox.Text, so switching tabs doesn't leak one basket's search text into another's
-    // reused BasketControl instance.
+    // SearchBox.Text / the checkbox, so switching tabs doesn't leak one basket's search text
+    // or "favourites only" toggle into another's reused BasketControl instance.
     public string SearchText { get; set; } = "";
+    public bool FavouritesOnly { get; set; }
 
     public event PropertyChangedEventHandler? PropertyChanged;
 }

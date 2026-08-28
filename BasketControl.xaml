@@ -181,6 +181,15 @@
                             <ComboBoxItem Content="★ First" Tag="FavouritesFirst"
                                           AutomationProperties.AutomationId="SortFavouritesFirstItem"/>
                         </ComboBox>
+                        <!-- Filter: when ticked, ApplyFilter also requires IsFavourite, AND-ed
+                             with the search text. Per-Basket state (Basket.FavouritesOnly). -->
+                        <CheckBox x:Name="FavouritesOnlyCheckBox" Content="★ only"
+                                  VerticalAlignment="Center" Margin="12,0,0,0"
+                                  ToolTip="Show only favourited products"
+                                  Checked="FavouritesOnlyCheckBox_Toggled"
+                                  Unchecked="FavouritesOnlyCheckBox_Toggled"
+                                  AutomationProperties.AutomationId="FavouritesOnlyCheckBox"
+                                  AutomationProperties.Name="Show favourites only"/>
                     </StackPanel>
                 </Grid>
                 <ListBox Grid.Row="1" x:Name="CatalogListBox"
