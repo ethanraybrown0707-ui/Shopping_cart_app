@@ -35,10 +35,10 @@ public partial class BasketControl : UserControl
         CatalogListBox.ItemsSource = basket.Catalog;
         CartListBox.ItemsSource = basket.Cart;
 
-        // Live sorting so toggling a product's IsFavourite re-floats it immediately, without
-        // routing through the checkbox's Click event - that only fires for a real user click,
-        // not a programmatic/AutomationPeer toggle. Only IsFavourite is watched; Name/Price
-        // never change after creation.
+        // Live sorting so that, while the "Favourites first" sort is active, ticking a
+        // product's checkbox re-floats it immediately - without routing through the checkbox's
+        // Click event, which only fires for a real user click, not a programmatic/AutomationPeer
+        // toggle. Only IsFavourite is watched; Name/Price never change after creation.
         if (CollectionViewSource.GetDefaultView(basket.Catalog) is ICollectionViewLiveShaping live)
         {
             live.IsLiveSorting = true;
@@ -100,8 +100,8 @@ public partial class BasketControl : UserControl
     /// <summary>Sorts via the catalog's CollectionView rather than reordering basket.Catalog
     /// itself, so the underlying collection (and Product.DefaultCatalog's original order that
     /// every fresh Basket seeds from) is never mutated - only how this basket's list displays.
-    /// The named sorts (Name/Price) are strict. "Default" floats the user's favourites to the
-    /// top, then falls back to the original catalog order via CatalogPosition.</summary>
+    /// Default and the Name/Price sorts ignore favourites; "Favourites first" is Default order
+    /// with the favourited products lifted to the top.</summary>
     private void ApplySort(Basket basket, ProductSortOrder order)
     {
         var view = CollectionViewSource.GetDefaultView(basket.Catalog);
@@ -120,12 +120,14 @@ public partial class BasketControl : UserControl
             case ProductSortOrder.PriceDescending:
                 view.SortDescriptions.Add(new SortDescription(nameof(Product.Price), ListSortDirection.Descending));
                 break;
-            case ProductSortOrder.Default:
-            default:
-                // Favourites first (persisted), then the original DefaultCatalog order.
+            case ProductSortOrder.FavouritesFirst:
+                // Favourites (persisted) on top, then everything in the original catalog order.
                 view.SortDescriptions.Add(new SortDescription(nameof(Product.IsFavourite), ListSortDirection.Descending));
                 view.SortDescriptions.Add(new SortDescription(nameof(Product.CatalogPosition), ListSortDirection.Ascending));
                 break;
+            case ProductSortOrder.Default:
+            default:
+                break; // no SortDescriptions -> original catalog order
         }
     }
 

@@ -165,7 +165,7 @@
                              enum (see BasketControl.xaml.cs). Content text is kept short (arrows,
                              not "(A-Z)"/"(Low to High)") so the box itself can stay narrow instead
                              of dominating this row - Tag (what the code-behind reads) is unchanged. -->
-                        <ComboBox x:Name="SortComboBox" Width="90" Margin="4,0,0,0"
+                        <ComboBox x:Name="SortComboBox" Width="96" Margin="4,0,0,0"
                                   AutomationProperties.AutomationId="SortComboBox"
                                   SelectionChanged="SortComboBox_SelectionChanged">
                             <ComboBoxItem Content="Default" Tag="Default"
@@ -178,6 +178,8 @@
                                           AutomationProperties.AutomationId="SortPriceAscendingItem"/>
                             <ComboBoxItem Content="Price ↓" Tag="PriceDescending"
                                           AutomationProperties.AutomationId="SortPriceDescendingItem"/>
+                            <ComboBoxItem Content="★ First" Tag="FavouritesFirst"
+                                          AutomationProperties.AutomationId="SortFavouritesFirstItem"/>
                         </ComboBox>
                     </StackPanel>
                 </Grid>

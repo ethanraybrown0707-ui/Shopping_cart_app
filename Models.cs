@@ -10,17 +10,17 @@ namespace ShoppingCartApp;
 /// <summary>
 /// A catalog product. Name/Price/CatalogPosition never change after creation; IsFavourite does
 /// (it's a per-user toggle, persisted via FavouritesStore), so this needs INotifyPropertyChanged
-/// - the bound checkbox and the "favourites float to top" sort both have to hear about a change.
-/// Every basket's Catalog wraps the same shared Product instances, so favouriting a product in
-/// one basket tab shows up in all of them, which matches how favourites are meant to work.
+/// - the bound checkbox and the "Favourites first" sort both have to hear about a change. Every
+/// basket's Catalog wraps the same shared Product instances, so favouriting a product in one
+/// basket tab shows up in all of them, which matches how favourites are meant to work.
 /// </summary>
 public class Product : INotifyPropertyChanged
 {
     public required string Name { get; init; }
     public required decimal Price { get; init; }
 
-    /// <summary>Position in DefaultCatalog (0-based) - the tie-breaker that keeps the "Default"
-    /// sort in its original order once "favourites first" is layered on top of it.</summary>
+    /// <summary>Position in DefaultCatalog (0-based). Used as the "Favourites first" sort's
+    /// tie-breaker so, within and below the favourites, items stay in the original order.</summary>
     public int CatalogPosition { get; init; }
 
     public string DisplayPrice => Price.ToString("C");
@@ -104,9 +104,9 @@ public class CartLine : INotifyPropertyChanged
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 }
 
-/// <summary>How a Basket's Catalog should be ordered. Default floats favourites to the top and
-/// otherwise keeps Product.DefaultCatalog's own order (via CatalogPosition); the Name/Price
-/// options are strict sorts.</summary>
+/// <summary>How a Basket's Catalog should be ordered. Default is Product.DefaultCatalog's own
+/// order; Name/Price are strict sorts; FavouritesFirst is that Default order with the user's
+/// favourites lifted to the top. New values must be appended (SortComboBox binds by index).</summary>
 public enum ProductSortOrder
 {
     Default,
@@ -114,6 +114,7 @@ public enum ProductSortOrder
     NameDescending,
     PriceAscending,
     PriceDescending,
+    FavouritesFirst,
 }
 
 /// <summary>
