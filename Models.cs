@@ -7,13 +7,37 @@ using System.Text.Json.Serialization;
 
 namespace ShoppingCartApp;
 
-/// <summary>A catalog product. No INotifyPropertyChanged needed since fields never change
-/// after creation - only the containing ObservableCollection needs to notify.</summary>
-public class Product
+/// <summary>
+/// A catalog product. Name/Price/CatalogPosition never change after creation; IsFavourite does
+/// (it's a per-user toggle, persisted via FavouritesStore), so this needs INotifyPropertyChanged
+/// - the bound checkbox and the "favourites float to top" sort both have to hear about a change.
+/// Every basket's Catalog wraps the same shared Product instances, so favouriting a product in
+/// one basket tab shows up in all of them, which matches how favourites are meant to work.
+/// </summary>
+public class Product : INotifyPropertyChanged
 {
     public required string Name { get; init; }
     public required decimal Price { get; init; }
+
+    /// <summary>Position in DefaultCatalog (0-based) - the tie-breaker that keeps the "Default"
+    /// sort in its original order once "favourites first" is layered on top of it.</summary>
+    public int CatalogPosition { get; init; }
+
     public string DisplayPrice => Price.ToString("C");
+
+    /// <summary>Whether this product is one of the user's favourites. Backed by FavouritesStore
+    /// (persisted to favourites.json), not a plain field, so the value is shared across every
+    /// basket's view of this same Product instance and survives app restarts.</summary>
+    public bool IsFavourite
+    {
+        get => FavouritesStore.Contains(Name);
+        set
+        {
+            if (value == FavouritesStore.Contains(Name)) return;
+            FavouritesStore.Set(Name, value);
+            OnPropertyChanged(nameof(IsFavourite));
+        }
+    }
 
     // Image links for the catalog row's "Images" dropdown. There's no real product-image
     // data, so these are just image searches built from the name - each opens in the default
@@ -22,19 +46,24 @@ public class Product
     public string BingImagesUrl => $"https://www.bing.com/images/search?q={Uri.EscapeDataString(Name)}";
     public string WikipediaUrl => $"https://en.wikipedia.org/w/index.php?search={Uri.EscapeDataString(Name)}";
 
-    /// <summary>The catalog every new Basket seeds from. Product has no mutable state, so it's
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    private void OnPropertyChanged(string propertyName) =>
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+
+    /// <summary>The catalog every new Basket seeds from. Product has no per-basket state, so it's
     /// safe for every basket's Catalog to wrap the same Product instances.</summary>
     public static readonly Product[] DefaultCatalog =
     {
-        new() { Name = "Wireless Mouse", Price = 24.99m },
-        new() { Name = "Mechanical Keyboard", Price = 79.99m },
-        new() { Name = "USB-C Hub", Price = 34.50m },
-        new() { Name = "Desk Lamp", Price = 18.75m },
-        new() { Name = "Webcam", Price = 45.00m },
-        new() { Name = "Laptop Stand", Price = 29.99m },
-        new() { Name = "Wireless Charger", Price = 22.50m },
-        new() { Name = "Bluetooth Speaker", Price = 39.99m },
-        new() { Name = "Monitor Arm", Price = 65.00m },
+        new() { CatalogPosition = 0, Name = "Wireless Mouse", Price = 24.99m },
+        new() { CatalogPosition = 1, Name = "Mechanical Keyboard", Price = 79.99m },
+        new() { CatalogPosition = 2, Name = "USB-C Hub", Price = 34.50m },
+        new() { CatalogPosition = 3, Name = "Desk Lamp", Price = 18.75m },
+        new() { CatalogPosition = 4, Name = "Webcam", Price = 45.00m },
+        new() { CatalogPosition = 5, Name = "Laptop Stand", Price = 29.99m },
+        new() { CatalogPosition = 6, Name = "Wireless Charger", Price = 22.50m },
+        new() { CatalogPosition = 7, Name = "Bluetooth Speaker", Price = 39.99m },
+        new() { CatalogPosition = 8, Name = "Monitor Arm", Price = 65.00m },
     };
 }
 
@@ -75,8 +104,9 @@ public class CartLine : INotifyPropertyChanged
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 }
 
-/// <summary>How a Basket's Catalog should be ordered. Default preserves Product.DefaultCatalog's
-/// own order (no sort applied at all, rather than sorting by some implicit key).</summary>
+/// <summary>How a Basket's Catalog should be ordered. Default floats favourites to the top and
+/// otherwise keeps Product.DefaultCatalog's own order (via CatalogPosition); the Name/Price
+/// options are strict sorts.</summary>
 public enum ProductSortOrder
 {
     Default,
@@ -91,9 +121,9 @@ public enum ProductSortOrder
 ///
 /// Header is positional, not a permanent identity - MainWindow renumbers every Basket's Header
 /// to match its left-to-right position ("Basket 1", "Basket 2", ...) after every add/close, so
-/// the leftmost tab always reads "Basket 1". That means Header can change after creation (unlike
-/// Product, which never changes), so it needs INotifyPropertyChanged for the bound TabItem
-/// header/AutomationProperties.Name to pick up a renumber.
+/// the leftmost tab always reads "Basket 1". That means Header can change after creation, so it
+/// needs INotifyPropertyChanged for the bound TabItem header/AutomationProperties.Name to pick
+/// up a renumber.
 ///
 /// StatusMessage and SortOrder live here, not just as transient control state (TextBlock.Text /
 /// ComboBox.SelectedIndex), because WPF's TabControl reuses a single BasketControl visual

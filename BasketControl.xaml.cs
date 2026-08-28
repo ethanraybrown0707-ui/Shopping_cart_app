@@ -34,6 +34,20 @@ public partial class BasketControl : UserControl
 
         CatalogListBox.ItemsSource = basket.Catalog;
         CartListBox.ItemsSource = basket.Cart;
+
+        // Live sorting so toggling a product's IsFavourite re-floats it immediately, without
+        // routing through the checkbox's Click event - that only fires for a real user click,
+        // not a programmatic/AutomationPeer toggle. Only IsFavourite is watched; Name/Price
+        // never change after creation.
+        if (CollectionViewSource.GetDefaultView(basket.Catalog) is ICollectionViewLiveShaping live)
+        {
+            live.IsLiveSorting = true;
+            if (!live.LiveSortingProperties.Contains(nameof(Product.IsFavourite)))
+            {
+                live.LiveSortingProperties.Add(nameof(Product.IsFavourite));
+            }
+        }
+
         UpdateTotal(basket);
         StatusText.Text = basket.StatusMessage;
 
@@ -85,7 +99,9 @@ public partial class BasketControl : UserControl
 
     /// <summary>Sorts via the catalog's CollectionView rather than reordering basket.Catalog
     /// itself, so the underlying collection (and Product.DefaultCatalog's original order that
-    /// every fresh Basket seeds from) is never mutated - only how this basket's list displays.</summary>
+    /// every fresh Basket seeds from) is never mutated - only how this basket's list displays.
+    /// The named sorts (Name/Price) are strict. "Default" floats the user's favourites to the
+    /// top, then falls back to the original catalog order via CatalogPosition.</summary>
     private void ApplySort(Basket basket, ProductSortOrder order)
     {
         var view = CollectionViewSource.GetDefaultView(basket.Catalog);
@@ -106,7 +122,10 @@ public partial class BasketControl : UserControl
                 break;
             case ProductSortOrder.Default:
             default:
-                break; // no SortDescriptions -> original catalog order
+                // Favourites first (persisted), then the original DefaultCatalog order.
+                view.SortDescriptions.Add(new SortDescription(nameof(Product.IsFavourite), ListSortDirection.Descending));
+                view.SortDescriptions.Add(new SortDescription(nameof(Product.CatalogPosition), ListSortDirection.Ascending));
+                break;
         }
     }
 
@@ -127,6 +146,20 @@ public partial class BasketControl : UserControl
 
         UpdateTotal(basket);
         SetStatus(basket, $"Added \"{product.Name}\" to cart");
+    }
+
+    private void FavouriteCheckBox_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not Basket basket) return;
+        if (sender is not FrameworkElement { Tag: Product product }) return;
+
+        // IsChecked's two-way binding has already written the new value through to
+        // Product.IsFavourite (and FavouritesStore) by the time Click fires. The re-float is
+        // handled by live sorting (see DataContextChanged), not here - this only adds the
+        // status-line feedback a real click deserves.
+        SetStatus(basket, product.IsFavourite
+            ? $"Added \"{product.Name}\" to favourites"
+            : $"Removed \"{product.Name}\" from favourites");
     }
 
     private void OpenImageLink_Click(object sender, RoutedEventArgs e)

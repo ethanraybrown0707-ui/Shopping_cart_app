@@ -16,20 +16,45 @@
             <Setter Property="BorderThickness" Value="1"/>
         </Style>
 
+        <!-- Favourite toggle: a grey star that turns gold when ticked (Foreground colours the
+             "★" content; the tick box itself keeps its system look). -->
+        <Style x:Key="FavouriteCheckBoxStyle" TargetType="CheckBox">
+            <Setter Property="Foreground" Value="#BFBFBF"/>
+            <Style.Triggers>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter Property="Foreground" Value="#E8A317"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
         <DataTemplate x:Key="ProductTemplate">
             <Grid Margin="4">
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="{Binding Name}" VerticalAlignment="Center"/>
-                <TextBlock Grid.Column="1" Text="{Binding DisplayPrice}" VerticalAlignment="Center"
+
+                <!-- Favourite toggle. Two-way bound to Product.IsFavourite, which persists via
+                     FavouritesStore; the Click handler adds a status line and re-floats the
+                     catalog. Same shared-AutomationId / bound-Name-per-row pattern as the
+                     buttons - Tag carries the Product for the handler. -->
+                <CheckBox Grid.Column="0" Content="★" Margin="0,0,8,0" VerticalAlignment="Center"
+                          Style="{StaticResource FavouriteCheckBoxStyle}"
+                          ToolTip="Favourite" Tag="{Binding}"
+                          IsChecked="{Binding IsFavourite, Mode=TwoWay}"
+                          Click="FavouriteCheckBox_Click"
+                          AutomationProperties.AutomationId="FavouriteCheckBox"
+                          AutomationProperties.Name="{Binding Name, StringFormat='Favourite {0}'}"/>
+
+                <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="2" Text="{Binding DisplayPrice}" VerticalAlignment="Center"
                            Margin="8,0" FontWeight="SemiBold"/>
                 <!-- AutomationId is the same on every row (it's a shared template); AutomationProperties.Name
                      is bound per-row so tests can tell rows apart by product name. -->
-                <Button Grid.Column="2" Content="Add to Cart" Tag="{Binding}"
+                <Button Grid.Column="3" Content="Add to Cart" Tag="{Binding}"
                         AutomationProperties.AutomationId="AddToCartButton"
                         AutomationProperties.Name="{Binding Name, StringFormat='Add {0} to Cart'}"
                         Click="AddToCart_Click"/>
@@ -41,7 +66,7 @@
                      Each link's target URL is in Tag (what the click handler opens) and also
                      in AutomationProperties.HelpText - so a screen reader announces where the
                      link goes, and a test can read/verify the exact destination. -->
-                <Menu Grid.Column="3" Margin="8,0,0,0" Background="Transparent" VerticalAlignment="Center">
+                <Menu Grid.Column="4" Margin="8,0,0,0" Background="Transparent" VerticalAlignment="Center">
                     <MenuItem Header="Images ▾" Style="{StaticResource ImagesMenuItemStyle}"
                               AutomationProperties.AutomationId="ProductImagesMenuItem"
                               AutomationProperties.Name="{Binding Name, StringFormat='Images for {0}'}">
