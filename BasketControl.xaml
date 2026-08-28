@@ -7,10 +7,20 @@
              mc:Ignorable="d"
              d:DesignHeight="420" d:DesignWidth="780">
     <UserControl.Resources>
+        <!-- Flat, bordered look for the per-row "Images" dropdown so it reads as a button
+             rather than bare menu text - same intent as MainWindow's TabGlyphButtonStyle. -->
+        <Style x:Key="ImagesMenuItemStyle" TargetType="MenuItem">
+            <Setter Property="Padding" Value="8,3"/>
+            <Setter Property="Background" Value="#F5F5F5"/>
+            <Setter Property="BorderBrush" Value="#ADADAD"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+
         <DataTemplate x:Key="ProductTemplate">
             <Grid Margin="4">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
@@ -23,6 +33,23 @@
                         AutomationProperties.AutomationId="AddToCartButton"
                         AutomationProperties.Name="{Binding Name, StringFormat='Add {0} to Cart'}"
                         Click="AddToCart_Click"/>
+
+                <!-- "Images" dropdown: opens a menu of per-product image-search links, each
+                     launched in the default browser (BasketControl.OpenImageLink_Click).
+                     Same shared-AutomationId / bound-Name-per-row pattern as Add to Cart -
+                     the child link items share ProductImageLinkItem across every row too. -->
+                <Menu Grid.Column="3" Margin="8,0,0,0" Background="Transparent" VerticalAlignment="Center">
+                    <MenuItem Header="Images ▾" Style="{StaticResource ImagesMenuItemStyle}"
+                              AutomationProperties.AutomationId="ProductImagesMenuItem"
+                              AutomationProperties.Name="{Binding Name, StringFormat='Images for {0}'}">
+                        <MenuItem Header="Google Images" Tag="{Binding GoogleImagesUrl}" Click="OpenImageLink_Click"
+                                  AutomationProperties.AutomationId="ProductImageLinkItem"/>
+                        <MenuItem Header="Bing Images" Tag="{Binding BingImagesUrl}" Click="OpenImageLink_Click"
+                                  AutomationProperties.AutomationId="ProductImageLinkItem"/>
+                        <MenuItem Header="Wikipedia" Tag="{Binding WikipediaUrl}" Click="OpenImageLink_Click"
+                                  AutomationProperties.AutomationId="ProductImageLinkItem"/>
+                    </MenuItem>
+                </Menu>
             </Grid>
         </DataTemplate>
 

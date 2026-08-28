@@ -15,6 +15,13 @@ public class Product
     public required decimal Price { get; init; }
     public string DisplayPrice => Price.ToString("C");
 
+    // Image links for the catalog row's "Images" dropdown. There's no real product-image
+    // data, so these are just image searches built from the name - each opens in the default
+    // browser (see BasketControl.OpenImageLink_Click). Computed, like DisplayPrice.
+    public string GoogleImagesUrl => $"https://www.google.com/search?tbm=isch&q={Uri.EscapeDataString(Name)}";
+    public string BingImagesUrl => $"https://www.bing.com/images/search?q={Uri.EscapeDataString(Name)}";
+    public string WikipediaUrl => $"https://en.wikipedia.org/w/index.php?search={Uri.EscapeDataString(Name)}";
+
     /// <summary>The catalog every new Basket seeds from. Product has no mutable state, so it's
     /// safe for every basket's Catalog to wrap the same Product instances.</summary>
     public static readonly Product[] DefaultCatalog =

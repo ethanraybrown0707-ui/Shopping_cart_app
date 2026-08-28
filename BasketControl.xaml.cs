@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -126,6 +127,24 @@ public partial class BasketControl : UserControl
 
         UpdateTotal(basket);
         SetStatus(basket, $"Added \"{product.Name}\" to cart");
+    }
+
+    private void OpenImageLink_Click(object sender, RoutedEventArgs e)
+    {
+        // Each link MenuItem carries its target URL in Tag (bound to a Product.*Url property).
+        if (sender is not MenuItem { Tag: string url }) return;
+
+        try
+        {
+            // UseShellExecute so the OS opens it in the default browser - a bare
+            // Process.Start(string) throws on .NET without it.
+            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            // Opening a link is a convenience - a missing browser or bad URL shouldn't crash.
+            if (DataContext is Basket basket) SetStatus(basket, $"Couldn't open image link: {ex.Message}");
+        }
     }
 
     private void RemoveFromCart_Click(object sender, RoutedEventArgs e)

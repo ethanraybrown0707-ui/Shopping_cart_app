@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ShoppingCartApp"
         mc:Ignorable="d"
-        Title="Shopping Cart" Height="480" Width="800"
+        Title="Shopping Cart" Height="480" Width="880"
         WindowStartupLocation="CenterScreen">
     <Window.Resources>
         <!-- Sets the accessible name/id on each generated TabItem so a test can find a specific
