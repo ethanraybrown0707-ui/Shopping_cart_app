@@ -19,6 +19,8 @@
                       SelectionChanged="HistorySortComboBox_SelectionChanged">
                 <ComboBoxItem Content="Newest first" Tag="Newest"
                               AutomationProperties.AutomationId="HistorySortNewestItem"/>
+                <ComboBoxItem Content="Oldest first" Tag="Oldest"
+                              AutomationProperties.AutomationId="HistorySortOldestItem"/>
                 <ComboBoxItem Content="Total: Low to High" Tag="TotalAscending"
                               AutomationProperties.AutomationId="HistorySortTotalAscendingItem"/>
                 <ComboBoxItem Content="Total: High to Low" Tag="TotalDescending"

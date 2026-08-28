@@ -27,9 +27,8 @@ public partial class OrderHistoryWindow : Window
     private void HistorySortComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e) => ApplySort();
 
     /// <summary>Sorts <see cref="_ordersView"/> (this window's view), never
-    /// OrderHistoryStore.Orders itself, so the stored/persisted order is untouched. "Newest
-    /// first" is an explicit PlacedAt-descending sort rather than relying on the store's
-    /// insert order.</summary>
+    /// OrderHistoryStore.Orders itself, so the stored/persisted order is untouched. The date
+    /// sorts are explicit PlacedAt sorts rather than relying on the store's insert order.</summary>
     private void ApplySort()
     {
         var tag = (HistorySortComboBox.SelectedItem as ComboBoxItem)?.Tag as string;
@@ -37,6 +36,9 @@ public partial class OrderHistoryWindow : Window
         sorts.Clear();
         switch (tag)
         {
+            case "Oldest":
+                sorts.Add(new SortDescription(nameof(OrderRecord.PlacedAt), ListSortDirection.Ascending));
+                break;
             case "TotalAscending":
                 sorts.Add(new SortDescription(nameof(OrderRecord.Total), ListSortDirection.Ascending));
                 break;
