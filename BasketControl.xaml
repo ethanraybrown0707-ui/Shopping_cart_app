@@ -37,15 +37,17 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Favourite toggle. Two-way bound to Product.IsFavourite, which persists via
-                     FavouritesStore; the Click handler adds a status line and re-floats the
-                     catalog. Same shared-AutomationId / bound-Name-per-row pattern as the
-                     buttons - Tag carries the Product for the handler. -->
+                <!-- Favourite toggle. IsChecked is one-way from Product.IsFavourite; the
+                     Checked/Unchecked handler is what writes back (after InteractionDelay) so
+                     the persist + re-float is delayed like every other interaction - and it
+                     fires for a programmatic/AutomationPeer toggle too, unlike Click. Same
+                     shared-AutomationId / bound-Name-per-row pattern as the buttons; Tag
+                     carries the Product for the handler. -->
                 <CheckBox Grid.Column="0" Content="★" Margin="0,0,8,0" VerticalAlignment="Center"
                           Style="{StaticResource FavouriteCheckBoxStyle}"
                           ToolTip="Favourite" Tag="{Binding}"
-                          IsChecked="{Binding IsFavourite, Mode=TwoWay}"
-                          Click="FavouriteCheckBox_Click"
+                          IsChecked="{Binding IsFavourite, Mode=OneWay}"
+                          Checked="FavouriteCheckBox_Toggled" Unchecked="FavouriteCheckBox_Toggled"
                           AutomationProperties.AutomationId="FavouriteCheckBox"
                           AutomationProperties.Name="{Binding Name, StringFormat='Favourite {0}'}"/>
 

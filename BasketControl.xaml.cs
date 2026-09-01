@@ -19,6 +19,11 @@ namespace ShoppingCartApp;
 /// SetStatus(basket, ...), which stores the message on the Basket itself - see Basket.
 /// StatusMessage's remarks for why (TabControl reuses this control instance across tabs).
 /// SortComboBox follows the same pattern via ApplySort/basket.SortOrder.
+///
+/// Every user-facing handler here is async: it awaits <see cref="InteractionDelay"/> before
+/// applying its effect, so there's a deliberate 0.1-1s beat between clicking/typing and the
+/// result (the control disables and the wait cursor shows meanwhile). The delay is a no-op
+/// when SHOPPING_CART_DISABLE_INTERACTION_DELAY=1.
 /// </summary>
 public partial class BasketControl : UserControl
 {
@@ -35,9 +40,9 @@ public partial class BasketControl : UserControl
         CatalogListBox.ItemsSource = basket.Catalog;
         CartListBox.ItemsSource = basket.Cart;
 
-        // Live shaping keyed on IsFavourite so that toggling a product's checkbox updates the
-        // view immediately, without routing through the checkbox's Click event (which only
-        // fires for a real user click, not a programmatic/AutomationPeer toggle):
+        // Live shaping keyed on IsFavourite so a favourite toggle re-shapes the view as soon as
+        // Product.IsFavourite actually changes (which, with the interaction delay, is a beat
+        // after the click) - and so a toggle in one basket tab re-shapes the others too:
         //  - live sorting: re-floats the item while the "Favourites first" sort is active;
         //  - live filtering: drops the item out while the "favourites only" filter is on.
         // Only IsFavourite is watched; Name/Price never change after creation.
@@ -83,19 +88,26 @@ public partial class BasketControl : UserControl
         ApplyFilter(basket);
     }
 
-    private void SearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
+    private async void SearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
     {
         if (DataContext is not Basket basket) return;
 
+        // The typed text is the interaction; recording it is immediate. Applying it to the
+        // list is the "effect" and gets the delay. The box itself stays enabled (disabling a
+        // control mid-type would eat keystrokes), so this only shows the wait cursor.
         basket.SearchText = SearchTextBox.Text;
+        await InteractionDelay.Wait();
         ApplyFilter(basket);
     }
 
-    private void FavouritesOnlyCheckBox_Toggled(object sender, RoutedEventArgs e)
+    private async void FavouritesOnlyCheckBox_Toggled(object sender, RoutedEventArgs e)
     {
         if (DataContext is not Basket basket) return;
 
-        basket.FavouritesOnly = FavouritesOnlyCheckBox.IsChecked == true;
+        var showFavouritesOnly = FavouritesOnlyCheckBox.IsChecked == true;
+        await InteractionDelay.Wait(FavouritesOnlyCheckBox);
+
+        basket.FavouritesOnly = showFavouritesOnly;
         ApplyFilter(basket);
         SetStatus(basket, basket.FavouritesOnly ? "Showing favourites only" : "Showing all products");
     }
@@ -121,11 +133,13 @@ public partial class BasketControl : UserControl
             && (!basket.FavouritesOnly || product.IsFavourite);
     }
 
-    private void SortComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private async void SortComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (DataContext is not Basket basket) return;
         if (SortComboBox.SelectedItem is not ComboBoxItem { Tag: string tag }) return;
         if (!Enum.TryParse<ProductSortOrder>(tag, out var order)) return;
+
+        await InteractionDelay.Wait(SortComboBox);
 
         basket.SortOrder = order;
         ApplySort(basket, order);
@@ -165,10 +179,12 @@ public partial class BasketControl : UserControl
         }
     }
 
-    private void AddToCart_Click(object sender, RoutedEventArgs e)
+    private async void AddToCart_Click(object sender, RoutedEventArgs e)
     {
         if (DataContext is not Basket basket) return;
-        if (sender is not FrameworkElement { Tag: Product product }) return;
+        if (sender is not FrameworkElement { Tag: Product product } button) return;
+
+        await InteractionDelay.Wait(button);
 
         var existingLine = basket.Cart.FirstOrDefault(line => line.Product == product);
         if (existingLine is not null)
@@ -184,24 +200,34 @@ public partial class BasketControl : UserControl
         SetStatus(basket, $"Added \"{product.Name}\" to cart");
     }
 
-    private void FavouriteCheckBox_Click(object sender, RoutedEventArgs e)
+    private async void FavouriteCheckBox_Toggled(object sender, RoutedEventArgs e)
     {
         if (DataContext is not Basket basket) return;
-        if (sender is not FrameworkElement { Tag: Product product }) return;
+        if (sender is not CheckBox { Tag: Product product } box) return;
 
-        // IsChecked's two-way binding has already written the new value through to
-        // Product.IsFavourite (and FavouritesStore) by the time Click fires. The re-float is
-        // handled by live sorting (see DataContextChanged), not here - this only adds the
-        // status-line feedback a real click deserves.
-        SetStatus(basket, product.IsFavourite
+        // IsChecked is one-way from Product.IsFavourite, so this handler also fires when the
+        // binding echoes a change back (or when another tab toggled the same product) - in
+        // which case there's nothing to do and no delay to impose.
+        var wantFavourite = box.IsChecked == true;
+        if (product.IsFavourite == wantFavourite) return;
+
+        await InteractionDelay.Wait(box);
+
+        // Persists via FavouritesStore and raises PropertyChanged, which the catalog's live
+        // sorting/filtering (see DataContextChanged) reacts to - so the re-float / drop-out
+        // happens here, a beat after the click.
+        product.IsFavourite = wantFavourite;
+        SetStatus(basket, wantFavourite
             ? $"Added \"{product.Name}\" to favourites"
             : $"Removed \"{product.Name}\" from favourites");
     }
 
-    private void OpenImageLink_Click(object sender, RoutedEventArgs e)
+    private async void OpenImageLink_Click(object sender, RoutedEventArgs e)
     {
         // Each link MenuItem carries its target URL in Tag (bound to a Product.*Url property).
-        if (sender is not MenuItem { Tag: string url }) return;
+        if (sender is not MenuItem { Tag: string url } menuItem) return;
+
+        await InteractionDelay.Wait(menuItem);
 
         try
         {
@@ -216,10 +242,12 @@ public partial class BasketControl : UserControl
         }
     }
 
-    private void RemoveFromCart_Click(object sender, RoutedEventArgs e)
+    private async void RemoveFromCart_Click(object sender, RoutedEventArgs e)
     {
         if (DataContext is not Basket basket) return;
-        if (sender is not FrameworkElement { Tag: CartLine line }) return;
+        if (sender is not FrameworkElement { Tag: CartLine line } button) return;
+
+        await InteractionDelay.Wait(button);
 
         // One click removes one unit; the row itself only disappears once its quantity
         // reaches 0, mirroring how Add to Cart builds the quantity up.
@@ -236,9 +264,11 @@ public partial class BasketControl : UserControl
         SetStatus(basket, $"Removed \"{line.Name}\" from cart");
     }
 
-    private void Checkout_Click(object sender, RoutedEventArgs e)
+    private async void Checkout_Click(object sender, RoutedEventArgs e)
     {
         if (DataContext is not Basket basket) return;
+
+        await InteractionDelay.Wait(sender as FrameworkElement);
 
         if (basket.Cart.Count == 0)
         {

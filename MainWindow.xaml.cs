@@ -28,27 +28,37 @@ public partial class MainWindow : Window
         BasketsTabControl.SelectedItem = firstBasket;
     }
 
-    private void NewBasketButton_Click(object sender, RoutedEventArgs e)
+    // Every handler awaits InteractionDelay first, so there's a 0.1-1s beat between the click
+    // and the tab appearing / closing / the history window opening (control disabled + wait
+    // cursor meanwhile). No-op when SHOPPING_CART_DISABLE_INTERACTION_DELAY=1.
+
+    private async void NewBasketButton_Click(object sender, RoutedEventArgs e)
     {
+        await InteractionDelay.Wait(sender as FrameworkElement);
+
         var basket = new Basket();
         Baskets.Add(basket);
         RenumberBaskets();
         BasketsTabControl.SelectedItem = basket;
     }
 
-    private void CloseBasket_Click(object sender, RoutedEventArgs e)
+    private async void CloseBasket_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is not FrameworkElement { Tag: Basket basket }) return;
+        if (sender is not FrameworkElement { Tag: Basket basket } button) return;
 
         // Always keep at least one basket open.
         if (Baskets.Count <= 1) return;
+
+        await InteractionDelay.Wait(button);
 
         Baskets.Remove(basket);
         RenumberBaskets();
     }
 
-    private void OrderHistoryMenuItem_Click(object sender, RoutedEventArgs e)
+    private async void OrderHistoryMenuItem_Click(object sender, RoutedEventArgs e)
     {
+        await InteractionDelay.Wait(sender as FrameworkElement);
+
         new OrderHistoryWindow { Owner = this }.Show();
     }
 
