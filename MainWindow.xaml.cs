@@ -62,6 +62,13 @@ public partial class MainWindow : Window
         new OrderHistoryWindow { Owner = this }.Show();
     }
 
+    private async void SettingsMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        await InteractionDelay.Wait(sender as FrameworkElement);
+
+        new SettingsWindow { Owner = this }.ShowDialog();
+    }
+
     private void RenumberBaskets()
     {
         for (var i = 0; i < Baskets.Count; i++)

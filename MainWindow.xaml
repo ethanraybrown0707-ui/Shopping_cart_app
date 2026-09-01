@@ -93,6 +93,10 @@
                 <MenuItem Header="_Order History..." Click="OrderHistoryMenuItem_Click"
                           AutomationProperties.AutomationId="OrderHistoryMenuItem"/>
             </MenuItem>
+            <MenuItem Header="_Settings">
+                <MenuItem Header="_Interaction Delay..." Click="SettingsMenuItem_Click"
+                          AutomationProperties.AutomationId="SettingsMenuItem"/>
+            </MenuItem>
         </Menu>
 
         <local:TabControlWithAddButton x:Name="BasketsTabControl"
