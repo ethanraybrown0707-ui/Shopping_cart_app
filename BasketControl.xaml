@@ -212,6 +212,8 @@
                     <RowDefinition Height="220"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 <TextBlock Grid.Row="0" Text="Cart" FontWeight="Bold" FontSize="16" Margin="0,0,0,6"/>
                 <ListBox Grid.Row="1" x:Name="CartListBox"
@@ -225,7 +227,20 @@
                 <TextBlock Grid.Row="2" x:Name="TotalText" Margin="0,10,0,0" FontWeight="Bold"
                            AutomationProperties.AutomationId="TotalText"/>
 
-                <Button Grid.Row="3" x:Name="CheckoutButton" Content="Checkout" Margin="0,10,0,0" Padding="8,4"
+                <!-- Multi-line, per-basket free text (Basket.ShippingAddress). Text is synced
+                     to/from the bound Basket in code-behind - same imperative per-Basket pattern
+                     as SearchTextBox / SortComboBox - because TabControl reuses this one control
+                     across tabs. Unlike the other inputs here it has no deferred "effect", so
+                     its handler doesn't go through InteractionDelay; checkout reads it. -->
+                <TextBlock Grid.Row="3" Text="Shipping address" FontWeight="SemiBold" Margin="0,10,0,2"/>
+                <TextBox Grid.Row="4" x:Name="ShippingAddressTextBox"
+                         Height="56" AcceptsReturn="True" TextWrapping="Wrap"
+                         VerticalScrollBarVisibility="Auto"
+                         AutomationProperties.AutomationId="ShippingAddressTextBox"
+                         AutomationProperties.Name="Shipping address"
+                         TextChanged="ShippingAddressTextBox_TextChanged"/>
+
+                <Button Grid.Row="5" x:Name="CheckoutButton" Content="Checkout" Margin="0,10,0,0" Padding="8,4"
                         AutomationProperties.AutomationId="CheckoutButton"
                         Click="Checkout_Click"/>
             </Grid>

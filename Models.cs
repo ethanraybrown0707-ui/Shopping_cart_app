@@ -164,6 +164,12 @@ public class Basket : INotifyPropertyChanged
     public string SearchText { get; set; } = "";
     public bool FavouritesOnly { get; set; }
 
+    /// <summary>Where this basket's order ships. Free text the user types before checkout;
+    /// stored per-basket (same reasoning as SearchText) and, like it, not persisted to disk -
+    /// it lives only for the session. Checkout echoes its first non-blank line in the
+    /// confirmation status.</summary>
+    public string ShippingAddress { get; set; } = "";
+
     public event PropertyChangedEventHandler? PropertyChanged;
 }
 

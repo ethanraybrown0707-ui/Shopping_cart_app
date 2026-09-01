@@ -76,6 +76,11 @@ public partial class BasketControl : UserControl
         SearchTextBox.Text = basket.SearchText;
         SearchTextBox.TextChanged += SearchTextBox_TextChanged;
 
+        // Same detach/reattach reasoning again - sync the shipping-address box to this basket.
+        ShippingAddressTextBox.TextChanged -= ShippingAddressTextBox_TextChanged;
+        ShippingAddressTextBox.Text = basket.ShippingAddress;
+        ShippingAddressTextBox.TextChanged += ShippingAddressTextBox_TextChanged;
+
         // Same detach/reattach reasoning as SortComboBox/SearchTextBox - Checked/Unchecked
         // (unlike Click) fire on a programmatic IsChecked change too.
         FavouritesOnlyCheckBox.Checked -= FavouritesOnlyCheckBox_Toggled;
@@ -98,6 +103,17 @@ public partial class BasketControl : UserControl
         basket.SearchText = SearchTextBox.Text;
         await InteractionDelay.Wait();
         ApplyFilter(basket);
+    }
+
+    private void ShippingAddressTextBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (DataContext is not Basket basket) return;
+
+        // Just recording what was typed. Unlike Search (which defers *applying* the filter) or
+        // the buttons (which defer their effect), there's no downstream action to delay here -
+        // checkout reads basket.ShippingAddress when it runs - so this doesn't await
+        // InteractionDelay.
+        basket.ShippingAddress = ShippingAddressTextBox.Text;
     }
 
     private async void FavouritesOnlyCheckBox_Toggled(object sender, RoutedEventArgs e)
@@ -295,7 +311,17 @@ public partial class BasketControl : UserControl
 
         basket.Cart.Clear();
         UpdateTotal(basket);
-        SetStatus(basket, $"Order placed - {itemCount} item(s) checked out");
+
+        // Echo the first non-blank line of the shipping address, if one was given, so the
+        // confirmation reflects it. The "Order placed" / "{itemCount} item(s)" wording stays
+        // intact ahead of it.
+        var shipTo = basket.ShippingAddress
+            .Split('\n')
+            .Select(line => line.Trim())
+            .FirstOrDefault(line => line.Length > 0);
+        var confirmation = $"Order placed - {itemCount} item(s) checked out";
+        if (!string.IsNullOrEmpty(shipTo)) confirmation += $" - shipping to {shipTo}";
+        SetStatus(basket, confirmation);
     }
 
     private void UpdateTotal(Basket basket)
